@@ -13,24 +13,21 @@ namespace Polychan.Widgets;
 public class PostWidgetContainer : Widget, IPaintHandler
 {
     private static readonly Padding Padding = new(8);
-    private static readonly int Spacing = 2;
 
-    public Post APIPost => m_postWidget.APIPost;
+    private bool m_loadedReplies;
+    private bool m_showingReplies;
 
+    private int m_treeIndex = 0;
+    
     private readonly PostWidget m_postWidget;
-    public PostWidget Test => m_postWidget;
 
-    private NullWidget? m_repliesHolder = null;
+    private NullWidget? m_repliesHolder;
     private PushButton? m_showRepliesButton;
 
-    private bool m_loadedReplies = false;
-    private bool m_showingReplies = false;
-
+    public Post ApiPost => m_postWidget.ApiPost;
     public List<string> ReferencedPosts => m_postWidget.ReferencedPosts;
-
-    private int m_rowIndex = 0;
-    private int m_treeIndex = 0;
-
+    public PostWidget Test => m_postWidget; // @TEMP
+    
     public PostWidgetContainer(Post post, Widget? parent = null) : base(parent)
     {
         Name = "PostWidgetContainer";
@@ -63,14 +60,24 @@ public class PostWidgetContainer : Widget, IPaintHandler
         m_postWidget.SetReplies(repliesString.ToString());
         */
 
-        m_showRepliesButton = new PushButton("View replies", this)
+        string ViewRepliesStr()
+        {
+            return $"View replies ({replies.Count})";
+        }
+
+        string HideRepliesStr()
+        {
+            return "Hide replies";
+        }
+
+        m_showRepliesButton = new PushButton(ViewRepliesStr(), this)
         {
             X = Padding.Left,
             OnClicked = () =>
             {
                 if (!m_showingReplies)
                 {
-                    m_showRepliesButton!.Text = "Hide replies";
+                    m_showRepliesButton!.Text = HideRepliesStr();
 
                     if (!m_loadedReplies)
                         loadReplies(replies);
@@ -78,7 +85,7 @@ public class PostWidgetContainer : Widget, IPaintHandler
                 }
                 else
                 {
-                    m_showRepliesButton!.Text = "View replies";
+                    m_showRepliesButton!.Text = ViewRepliesStr();
                     hideReplies();
                 }
             }
@@ -107,26 +114,26 @@ public class PostWidgetContainer : Widget, IPaintHandler
         var pw = new Dictionary<int, PostWidgetContainer>(replies.Count);
         foreach (var item in replies)
         {
-            var widget = new PostWidgetContainer(item.m_postWidget.APIPost, m_repliesHolder)
+            var widget = new PostWidgetContainer(item.m_postWidget.ApiPost, m_repliesHolder)
             {
                 Width = this.Width,
-                Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed),
+                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                 m_treeIndex = this.m_treeIndex + 1 // Alternating row colors for replies? Looks pretty cool ig
             };
-            pw.Add(item.m_postWidget.APIPost.No, widget);
+            pw.Add(item.m_postWidget.ApiPost.No, widget);
         }
         ChanApp.MainWindow.Bruhhh(pw);
     }
 
     private void showReplies()
     {
-        m_repliesHolder.Visible = true;
+        if (m_repliesHolder != null) m_repliesHolder.Visible = true;
         m_showingReplies = true;
     }
 
     private void hideReplies()
     {
-        m_repliesHolder.Visible = false;
+        if (m_repliesHolder != null) m_repliesHolder.Visible = false;
         m_showingReplies = false;
     }
 
@@ -158,17 +165,15 @@ public class PostWidgetContainer : Widget, IPaintHandler
 
 public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
 {
-    private readonly Post m_apiPost;
-    public Post APIPost => m_apiPost;
-
     private readonly PostThumbnail m_previewBitmap;
     private readonly Label m_nameLabel;
     private readonly Label m_dateLabel;
     private readonly Label? m_previewInfoLabel;
-    private readonly Label m_postIDLabel;
+    private readonly Label m_postIdLabel;
     private readonly Label m_commentLabel;
     private readonly Label m_repliesLabel;
 
+    public Post ApiPost { get; }
     public readonly List<string> ReferencedPosts = [];
 
     public PostWidget(API.Models.Post post, Widget? parent = null) : base(parent)
@@ -176,7 +181,7 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
         Name = "A Post widget!!!";
         ShouldCache = true;
 
-        m_apiPost = post;
+        ApiPost = post;
 
         // UI Layout
         m_nameLabel = new Label(this)
@@ -195,7 +200,7 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
             CatchCursorEvents = false,
         };
 
-        m_postIDLabel = new Label(this)
+        m_postIdLabel = new Label(this)
         {
             X = 0,
             Y = 0,
@@ -203,9 +208,7 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
             CatchCursorEvents = false,
         };
 
-        m_repliesLabel = new Label(this)
-        {
-        };
+        m_repliesLabel = new Label(this);
 
         if (post.Tim != null)
         {
@@ -216,7 +219,7 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
             };
         }
 
-        var rawComment = post.Com == null ? string.Empty : post.Com;
+        var rawComment = post.Com;
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
         var commentInput = decoded;
@@ -251,7 +254,7 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
 
         var commentY = m_nameLabel.Y + m_nameLabel.Height + 4;
 
-        m_previewBitmap = new(m_apiPost, this)
+        m_previewBitmap = new(ApiPost, this)
         {
             X = 0,
             Y = commentY,
@@ -264,7 +267,7 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
             Text = commentInput,
             WordWrap = true,
 
-            Fitting = new(GUI.Layouts.FitPolicy.Policy.Fixed, GUI.Layouts.FitPolicy.Policy.Fixed),
+            Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Fixed),
             CatchCursorEvents = false,
         };
 
@@ -274,7 +277,9 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
     public void SetBitmapPreview(SKImage thumbnail)
     {
         m_previewBitmap.SetThumbnail(thumbnail);
-        m_previewInfoLabel!.Text = $"<span class=\"date\">{((long)m_apiPost.Fsize!).FormatBytes()} {m_apiPost.Ext}</span>";
+        // Bytes and size info label
+        var previewInfo = $"{ApiPost.Filename}{ApiPost.Ext} ({((long)ApiPost.Fsize!).FormatBytes()}, {thumbnail.Width}x{thumbnail.Height})";
+        m_previewInfoLabel!.Text = $"<span class=\"date\">{previewInfo}</span>";
 
         SetHeight();
     }
@@ -289,23 +294,23 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
     {
         if (evt.button == GUI.Input.MouseButton.Right)
         {
-            var threadURL = $"https://boards.4chan.org/{ChanApp.ChanClient.CurrentBoard}/thread/{ChanApp.ChanClient.CurrentThread.No}";
-            var postURL = $"{threadURL}#p{m_apiPost.No}";
+            var threadUrl = $"https://boards.4chan.org/{ChanApp.ChanClient.CurrentBoard}/thread/{ChanApp.ChanClient.CurrentThread.No}";
+            var postUrl = $"{threadUrl}#p{ApiPost.No}";
 
             MenuPopup a = new(this);
             var m = new Menu(this);
 
             m.AddAction(MaterialIcons.Link, "Copy Post URL to Clipboard", () =>
             {
-                Application.Clipboard.SetText(postURL);
+                Application.Clipboard.SetText(postUrl);
             });
             m.AddAction(MaterialIcons.Public, "Open Post in Browser", () =>
             {
-                Application.OpenURL(postURL);
+                Application.OpenURL(postUrl);
             });
             m.AddAction(MaterialIcons.Feed, "Open Thread in Browser", () =>
             {
-                Application.OpenURL(threadURL);
+                Application.OpenURL(threadUrl);
             });
 
             m.AddSeparator();
@@ -349,7 +354,7 @@ public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
         // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
         m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
         // m_postIDLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
-        m_postIDLabel.X = this.Width - m_postIDLabel.Width;
+        m_postIdLabel.X = this.Width - m_postIdLabel.Width;
 
         if (m_previewInfoLabel != null)
         {

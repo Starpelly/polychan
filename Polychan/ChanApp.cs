@@ -34,7 +34,7 @@ public static class ChanApp
         using var iconStream = PolychanResources.ResourceAssembly.GetManifestResourceStream("Polychan.Resources.Images.4channy.ico");
         MainWindow.SetIconFromStream(iconStream!);
 
-        // LoadCatalog("v");
+        LoadCatalog("g");
         // LoadThread("714085510");
         MainWindow.Show();
         MainWindow.T();

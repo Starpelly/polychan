@@ -110,6 +110,7 @@ public class PolychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             */
 
             // Boards list
+            if (false)
             {
                 var boardsListHolder = new NullWidget(mainHolder)
                 {
@@ -368,7 +369,7 @@ public class PolychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         {
             refPosts.Add(key, []);
 
-            var post = widgetsToUpdate[key].APIPost;
+            var post = widgetsToUpdate[key].ApiPost;
             if (post.Tim != null && post.Tim > 0)
             {
                 imageIDs.Add((long)post.Tim, widgetsToUpdate[key]);

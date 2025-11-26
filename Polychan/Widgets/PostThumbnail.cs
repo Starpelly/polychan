@@ -9,9 +9,9 @@ namespace Polychan.Widgets;
 
 public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHandler, IMouseLeaveHandler
 {
-    public const int MaxImageWidth = 1280;
+    private const int MAX_IMAGE_WIDTH = 1280;
 
-    private readonly Post m_ApiPost;
+    private readonly Post m_apiPost;
 
     private SKImage? m_thumbnailImage;
     private SKImage? m_fullImage;
@@ -24,7 +24,7 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
 
     public PostThumbnail(Post post, Widget? parent = null) : base(parent)
     {
-        m_ApiPost = post;
+        m_apiPost = post;
 
         updateImage(null);
     }
@@ -100,13 +100,13 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
         var newWidth = Bitmap.Width;
         var newHeight = Bitmap.Height;
 
-        var fullPreviewWidth = m_fullImage != null ? m_fullImage.Width : newWidth;
+        // var fullPreviewWidth = m_fullImage?.Width ?? newWidth;
         if (maxWidth > newWidth)
         {
             maxWidth = newWidth;
         }
 
-        if (newWidth > maxWidth || newWidth > PostThumbnail.MaxImageWidth)
+        if (newWidth > maxWidth || newWidth > PostThumbnail.MAX_IMAGE_WIDTH)
         {
             newWidth = maxWidth;
             newHeight = (int)(((float)newWidth / Bitmap.Width) * Bitmap.Height);
@@ -126,7 +126,7 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
             return;
         }
 
-        FitToMaxWidth(m_fullImage != null ? m_fullImage.Width : MaxImageWidth);
+        FitToMaxWidth(m_fullImage?.Width ?? MAX_IMAGE_WIDTH);
 
         (Parent as PostWidget)?.OnResize();
     }
@@ -136,12 +136,12 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
         if (m_triedLoadingFull) return;
         m_triedLoadingFull = true;
 
-        if (m_ApiPost.Ext == ".gif")
+        if (m_apiPost.Ext == ".gif")
         {
             m_gifPlayer = new();
 
-            var post = m_ApiPost;
-            string url = $"https://{Domains.UserContent}/{ChanApp.ChanClient.CurrentBoard}/{post.Tim}{post.Ext}";
+            var post = m_apiPost;
+            var url = $"https://{Domains.UserContent}/{ChanApp.ChanClient.CurrentBoard}/{post.Tim}{post.Ext}";
 
             Console.WriteLine(url);
             _ = m_gifPlayer.LoadAsync(url, () =>
@@ -161,7 +161,7 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
         }
         else
         {
-            _ = ChanApp.ChanClient.DownloadAttachmentAsync(m_ApiPost, (thumbnail) =>
+            _ = ChanApp.ChanClient.DownloadAttachmentAsync(m_apiPost, (thumbnail) =>
             {
                 if (thumbnail != null)
                 {

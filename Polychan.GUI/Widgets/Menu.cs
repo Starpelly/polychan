@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using System.Diagnostics;
+using SkiaSharp;
 
 namespace Polychan.GUI.Widgets;
 
@@ -14,11 +15,11 @@ public class MenuSeparator : IMenu
 
 public class MenuAction : IMenu
 {
-    public string? Icon;
-    public string Text;
-    public Action? Action;
+    public readonly string? Icon;
+    public readonly string Text;
+    public readonly Action? Action;
 
-    public bool IsSeparator = false;
+    public bool IsSeparator;
 
     public MenuAction(string? icon, string text, Action? action = null)
     {
@@ -49,19 +50,18 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         Widget,
     }
 
-    private const int XPadding = 8;
-    private const int IconWidth = 20;
-    private const int IconSpacing = 4;
+    private const int X_PADDING = 8;
+    private const int ICON_WIDTH = 20;
+    private const int ICON_SPACING = 4;
 
-    private static int p_iconWidth => IconWidth + IconSpacing;
+    private static int PIconWidth => ICON_WIDTH + ICON_SPACING;
 
     private int m_hoveredIndex = -1;
-    private bool m_open = false;
-    private bool m_hovering = false;
+    private bool m_open;
+    private bool m_hovering;
 
     private readonly MenuItemType m_itemType;
-
-    private MenuAction m_action;
+    private readonly MenuAction? m_action;
 
     internal readonly List<MenuAction> Actions = [];
 
@@ -105,12 +105,12 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         return action;
     }
 
-    public MenuAction AddAction(string icon, string text, Action action)
+    public MenuAction AddAction(string icon, string text, Action? action)
     {
         return AddAction(new MenuAction(icon, text, action));
     }
 
-    public MenuAction AddAction(string text, Action action)
+    public MenuAction AddAction(string text, Action? action)
     {
         var n = new MenuAction(text, action);
         Actions.Add(n);
@@ -119,8 +119,10 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     public void AddSeparator()
     {
-        var n = new MenuAction("", null);
-        n.IsSeparator = true;
+        var n = new MenuAction("")
+        {
+            IsSeparator = true
+        };
         Actions.Add(n);
     }
 
@@ -129,14 +131,17 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         var a = 0;
         var b = 0;
 
-        if (m_itemType == MenuItemType.MenuBarSubMenu)
+        if (m_action != null)
         {
-            a = (int)Application.DefaultFont.MeasureText(m_action.Text) + (XPadding * 2);
-        }
-        else
-        {
-            a = p_iconWidth + (int)Application.DefaultFont.MeasureText(m_action.Text) + (XPadding * 2);
-            b = (m_itemType == MenuItemType.MenuAction) ? p_iconWidth : !string.IsNullOrEmpty(m_action.Icon) ? IconSpacing : 0; // Idk, this looks nicer
+            if (m_itemType == MenuItemType.MenuBarSubMenu)
+            {
+                a = (int)Application.DefaultFont.MeasureText(m_action.Text) + (X_PADDING * 2);
+            }
+            else
+            {
+                a = PIconWidth + (int)Application.DefaultFont.MeasureText(m_action.Text) + (X_PADDING * 2);
+                b = (m_itemType == MenuItemType.MenuAction) ? PIconWidth : !string.IsNullOrEmpty(m_action.Icon) ? ICON_SPACING : 0; // Idk, this looks nicer
+            }
         }
 
         return a + b;
@@ -148,10 +153,10 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     {
         using var paint = new SKPaint();
 
-        if (m_action.IsSeparator)
+        if (m_action is { IsSeparator: true })
         {
             paint.Color = Application.DefaultStyle.GetFrameColor().Lighter(1.1f);
-            canvas.DrawLine(IconWidth + IconSpacing + XPadding, 0, Width - XPadding, 0, paint);
+            canvas.DrawLine(ICON_WIDTH + ICON_SPACING + X_PADDING, 0, Width - X_PADDING, 0, paint);
 
             return;
         }
@@ -165,9 +170,8 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
             ? EffectivePalette.Get(ColorRole.HighlightedText)
             : EffectivePalette.Get(ColorRole.Text);
 
-        int roundness = 0;
-        var labelXOffset = m_itemType == MenuItemType.MenuBarSubMenu ? 0 : IconWidth + IconSpacing;
-
+        const int roundness = 0;
+        var labelXOffset = m_itemType == MenuItemType.MenuBarSubMenu ? 0 : ICON_WIDTH + ICON_SPACING;
 
         paint.Color = bgColor;
         paint.IsAntialias = roundness > 0;
@@ -177,12 +181,12 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         using var textPaint = new SKPaint();
         textPaint.Color = textColor;
         textPaint.IsAntialias = true;
-        canvas.DrawText(m_action.Text, labelXOffset + XPadding, 16, Application.DefaultFont, textPaint);
+        canvas.DrawText(m_action?.Text, labelXOffset + X_PADDING, 16, Application.DefaultFont, textPaint);
 
         // Draw icon
-        if (!string.IsNullOrEmpty(m_action.Icon))
+        if (!string.IsNullOrEmpty(m_action?.Icon))
         {
-            canvas.DrawText(m_action.Icon, XPadding, 16 + 4, Application.FontIcon, textPaint);
+            canvas.DrawText(m_action.Icon, X_PADDING, 16 + 4, Application.FontIcon, textPaint);
         }
     }
 
@@ -247,6 +251,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
                 OnUserOpened?.Invoke();
                 break;
             case MenuItemType.MenuAction:
+                Debug.Assert(m_action != null);
                 m_action.Action?.Invoke();
                 OnSubmitted?.Invoke();
                 break;
