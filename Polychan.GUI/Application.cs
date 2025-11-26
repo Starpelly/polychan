@@ -1,7 +1,7 @@
 ﻿using SDL;
-using SixLabors.ImageSharp.Formats.Png;
 using SkiaSharp;
 using System.Diagnostics;
+using SixLabors.ImageSharp.Formats.Png;
 
 using Polychan.GUI.Styles;
 using Polychan.GUI.Widgets;
