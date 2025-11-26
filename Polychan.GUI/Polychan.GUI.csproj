@@ -19,8 +19,6 @@
 
     <ItemGroup>
       <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
-      <PackageReference Include="ppy.SDL3-CS" Version="2025.608.0" />
-      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.10" />
       <PackageReference Include="SkiaSharp" Version="3.119.0" />
       <PackageReference Include="Svg.Skia" Version="3.0.3" />
     </ItemGroup>
@@ -32,7 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Framework\Platform\Input\" />
+      <ProjectReference Include="..\Polychan.Framework\Polychan.Framework.csproj" />
     </ItemGroup>
 
 </Project>

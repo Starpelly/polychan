@@ -26,7 +26,7 @@ public class MainWindow : WindowWidget, IPaintHandler, IResizeHandler
 
     public void SetIconFromStream(Stream imageStream)
     {
-        m_nativeWindow?.Window.SetIconFromStream(imageStream);
+        m_nativeWindow?.WindowHolder.Window.SetIconFromStream(imageStream);
     }
 
     #endregion

@@ -129,7 +129,7 @@ namespace Polychan.GUI.Framework.Platform.SDL3
             var flags = SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
                         SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
-            if (Config.HardwareAccel)
+            if (wf.HasFlag(WindowFlags.OpenGL))
             {
                 flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
             }
@@ -198,12 +198,6 @@ namespace Polychan.GUI.Framework.Platform.SDL3
 
             s_openedWindows.Add(SDLWindowID, this);
             SDL_AddEventWatch(&eventWatch, ObjectHandle.Handle);
-
-            if (Config.HardwareAccel)
-            {
-                // VSync
-                // SDL_GL_SetSwapInterval(1);
-            }
 
             ParentWindow = parentWindow;
 
@@ -301,12 +295,14 @@ namespace Polychan.GUI.Framework.Platform.SDL3
                     break;
                 */
                     // @HACK
+                /*
                 case SDL_EventType.SDL_EVENT_KEY_DOWN:
                     if (e.key.key == SDL_Keycode.SDLK_F2)
                     {
                         Application.DebugDrawing = !Application.DebugDrawing;
                     }
                     break;
+                */
             }
         }
 

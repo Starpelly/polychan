@@ -4,6 +4,7 @@ using Polychan.GUI.Input;
 
 namespace Polychan.GUI.Framework.Platform
 {
+    [Flags]
     public enum WindowFlags
     {
         None = 0,
@@ -14,9 +15,11 @@ namespace Polychan.GUI.Framework.Platform
         TopMost = 1 << 4,
         SysMenu = 1 << 5,
         Resizable = 1 << 6,
+        // ReSharper disable once InconsistentNaming
+        OpenGL = 1 << 7,
     }
 
-    internal interface IWindow : IDisposable
+    public interface IWindow : IDisposable
     {
         /// <summary>
         /// Creates the concrete window implementation.

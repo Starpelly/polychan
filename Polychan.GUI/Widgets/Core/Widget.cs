@@ -408,10 +408,10 @@ public partial class Widget : IDisposable
 
         if (m_nativeWindow != null)
         {
-            m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
+            m_nativeWindow.WindowHolder.Window.Size = new System.Drawing.Size(m_width, m_height);
             m_nativeWindow.CreateFrameBuffer(m_width, m_height);
 
-            m_nativeWindow.Window.Position = new System.Drawing.Point(X, Y);
+            m_nativeWindow.WindowHolder.Window.Position = new System.Drawing.Point(X, Y);
             if (m_windowType != WindowType.Popup)
             {
                 // @HACK
@@ -420,9 +420,9 @@ public partial class Widget : IDisposable
             if (m_nativeWindow.ParentWindow != null)
             {
                 // Inherit the parent window's icon by default
-                m_nativeWindow.Window.CopyIconFromWindow(m_nativeWindow.ParentWindow.Window);
+                m_nativeWindow.WindowHolder.Window.CopyIconFromWindow(m_nativeWindow.ParentWindow.WindowHolder.Window);
             }
-            m_nativeWindow.Window.Show();
+            m_nativeWindow.WindowHolder.Window.Show();
         }
 
         TriggerRepaint();
@@ -438,7 +438,7 @@ public partial class Widget : IDisposable
     public void Hide()
     {
         m_visible = false;
-        m_nativeWindow?.Window.Hide();
+        m_nativeWindow?.WindowHolder.Window.Hide();
 
         if (s_openPopupMenu == this)
         {
@@ -496,7 +496,7 @@ public partial class Widget : IDisposable
         m_y = y;
 
         if (m_nativeWindow != null)
-            m_nativeWindow.Window.Position = new System.Drawing.Point(m_x, m_y);
+            m_nativeWindow.WindowHolder.Window.Position = new System.Drawing.Point(m_x, m_y);
     }
 
     public void SetRect(int x, int y, int width, int height)
@@ -522,7 +522,7 @@ public partial class Widget : IDisposable
         // can't be in a layout!
         if (m_nativeWindow != null)
         {
-            m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
+            m_nativeWindow.WindowHolder.Window.Size = new System.Drawing.Size(m_width, m_height);
         }
 
         dispatchResize();
@@ -956,31 +956,31 @@ public partial class Widget : IDisposable
 
         m_nativeWindow = new(this, GetType().Name, flags, parentWindow);
 
-        m_nativeWindow.Window.Resized += delegate ()
+        m_nativeWindow.WindowHolder.Window.Resized += delegate ()
         {
-            onNativeWindowResizeEvent(m_nativeWindow.Window.Size.Width, m_nativeWindow.Window.Size.Height);
+            onNativeWindowResizeEvent(m_nativeWindow.WindowHolder.Window.Size.Width, m_nativeWindow.WindowHolder.Window.Size.Height);
         };
-        m_nativeWindow.Window.MouseMove += delegate (System.Numerics.Vector2 pos)
+        m_nativeWindow.WindowHolder.Window.MouseMove += delegate (System.Numerics.Vector2 pos)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Move, MouseButton.None);
         };
-        m_nativeWindow.Window.MouseDown += delegate(System.Numerics.Vector2 pos, MouseButton button)
+        m_nativeWindow.WindowHolder.Window.MouseDown += delegate(System.Numerics.Vector2 pos, MouseButton button)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Down, button);
         };
-        m_nativeWindow.Window.MouseUp += delegate (System.Numerics.Vector2 pos, MouseButton button)
+        m_nativeWindow.WindowHolder.Window.MouseUp += delegate (System.Numerics.Vector2 pos, MouseButton button)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Up, button);
         };
-        m_nativeWindow.Window.MouseWheel += delegate (System.Numerics.Vector2 pos, System.Numerics.Vector2 delta, bool precise)
+        m_nativeWindow.WindowHolder.Window.MouseWheel += delegate (System.Numerics.Vector2 pos, System.Numerics.Vector2 delta, bool precise)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Wheel, MouseButton.None, (int)delta.X, (int)delta.Y);
         };
-        m_nativeWindow.Window.MouseEntered += delegate()
+        m_nativeWindow.WindowHolder.Window.MouseEntered += delegate()
         {
             // I don't know what I'd use this for right now
         };
-        m_nativeWindow.Window.MouseLeft += delegate ()
+        m_nativeWindow.WindowHolder.Window.MouseLeft += delegate ()
         {
             // Simulate mouse exiting
             m_lastHovered?.handleMouseLeave();

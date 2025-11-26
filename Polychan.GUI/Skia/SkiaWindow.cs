@@ -1,6 +1,8 @@
 ﻿using SDL;
 using SkiaSharp;
 using System.Diagnostics;
+using System.Drawing;
+using Polychan.Framework;
 using Polychan.GUI.Framework.Platform.SDL3;
 using Polychan.GUI.Framework.Platform.Windows;
 using Polychan.GUI.Framework.Utils;
@@ -14,10 +16,10 @@ internal unsafe class SkiaWindow
     internal Widget ParentWidget { get; private set; }
     internal readonly SkiaWindow? ParentWindow;
 
-    internal IWindow Window { get; private set; }
+    internal OSWindow WindowHolder { get; private set; }
 
-    internal SDL_Window* SDLWindowHandle => ((SDL3Window)Window).SDLWindowHandle;
-    internal SDL_WindowID SDLWindowID => ((SDL3Window)Window).SDLWindowID;
+    internal SDL_Window* SDLWindowHandle => WindowHolder.SDLWindowHandle;
+    internal SDL_WindowID SDLWindowID => WindowHolder.SDLWindowID;
 
     #region Hardware Acceleration
 
@@ -46,30 +48,27 @@ internal unsafe class SkiaWindow
 
     public SkiaWindow(Widget parent, string title, WindowFlags flags, SkiaWindow? parentWindow)
     {
-        switch (RuntimeInfo.OS)
-        {
-            case RuntimeInfo.Platform.Windows:
-                Debug.Assert(OperatingSystem.IsWindows());
-                Window = new SDL3WindowsWindow();
-                break;
-            default:
-                throw new InvalidOperationException($"Could not find a suitable window for the selected operating system ({RuntimeInfo.OS})");
-        }
-
+        WindowHolder = new OSWindow();
+        
         ParentWindow = parentWindow;
 
-        Window.Create(parentWindow?.Window ?? null, flags);
+        if (Config.HardwareAccel)
+        {
+            flags |= WindowFlags.OpenGL;
+        }
+        
+        WindowHolder.Window.Create(parentWindow?.WindowHolder.Window ?? null, flags);
 
         Center();
 
-        Window.ExitRequested += delegate ()
+        WindowHolder.Window.ExitRequested += delegate ()
         {
             ParentWidget?.RequestWindowClose();
         };
 
         ParentWidget = parent;
 
-        Window.Title = title;
+        WindowHolder.Window.Title = title;
 
         if (Config.HardwareAccel)
         {
@@ -167,7 +166,7 @@ internal unsafe class SkiaWindow
             SDL_DestroyRenderer(SDLRenderer);
         }
 
-        Window.Dispose();
+        WindowHolder.Dispose();
     }
 
     public void BeginPresent()
@@ -194,12 +193,12 @@ internal unsafe class SkiaWindow
 
     internal static void PollEvents()
     {
-        SDL3Window.pollSDLEvents();
+        OSWindow.PollEvents();
     }
 
     internal void RunCommands()
     {
-        (Window as SDL3Window)!.RunCommands();
+        WindowHolder.RunCommands();
     }
 
     /// <summary>
@@ -231,6 +230,7 @@ internal unsafe class SkiaWindow
 
         // Set the window position
         // SDL_SetWindowPosition(SDLWindowHandle, centeredX, centeredY);
-        (Window as SDL3Window)!.Position = new(centeredX, centeredY);
+        // (WindowHolder as SDL3Window)!.Position = new(centeredX, centeredY);
+        WindowHolder.Window.Position = new Point(centeredX, centeredY);
     }
 }

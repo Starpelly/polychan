@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polychan.GUI.Tests", "Polyc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polychan.Desktop", "Polychan.Desktop\Polychan.Desktop.csproj", "{4D213376-6E83-48BC-9B9F-BB950F7FA049}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polychan.Console", "Polychan.Console\Polychan.Console.csproj", "{B37BBC93-8CDE-41C3-A6D5-1D6A0BEB3735}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polychan.Framework", "Polychan.Framework\Polychan.Framework.csproj", "{9EF0B7BF-C5C8-4212-BD39-2E299194B3F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,10 +41,10 @@ Global
 		{4D213376-6E83-48BC-9B9F-BB950F7FA049}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D213376-6E83-48BC-9B9F-BB950F7FA049}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D213376-6E83-48BC-9B9F-BB950F7FA049}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B37BBC93-8CDE-41C3-A6D5-1D6A0BEB3735}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B37BBC93-8CDE-41C3-A6D5-1D6A0BEB3735}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B37BBC93-8CDE-41C3-A6D5-1D6A0BEB3735}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B37BBC93-8CDE-41C3-A6D5-1D6A0BEB3735}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9EF0B7BF-C5C8-4212-BD39-2E299194B3F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EF0B7BF-C5C8-4212-BD39-2E299194B3F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EF0B7BF-C5C8-4212-BD39-2E299194B3F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EF0B7BF-C5C8-4212-BD39-2E299194B3F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

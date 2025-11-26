@@ -233,7 +233,7 @@ public partial class Widget
             // can't be in a layout!
             if (m_nativeWindow != null)
             {
-                m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
+                m_nativeWindow.WindowHolder.Window.Size = new System.Drawing.Size(m_width, m_height);
             }
 
             dispatchResize();
