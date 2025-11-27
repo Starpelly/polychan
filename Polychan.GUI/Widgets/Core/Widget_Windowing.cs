@@ -245,6 +245,6 @@ public partial class Widget
         TriggerRepaint();
 
         LayoutQueue.Flush();
-        RenderTopLevel(Application.DebugDrawing);
+        RenderTopLevel(Framework.Debugging.DebugDrawing);
     }
 }

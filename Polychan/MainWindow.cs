@@ -170,8 +170,16 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
                     };
                 }
             }
-
-            // CreateSeparator();
+            
+            // SideBar
+            {
+                new SideBar(mainHolder)
+                {
+                    Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
+                    Width = 140
+                };
+                CreateSeparator();
+            }
 
             // Threads list
             {
@@ -208,8 +216,7 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
 
             CreateSeparator();
 
-            // Main content
-            if (true)
+            // Posts lists
             {
                 var postsListHolder = new NullWidget(mainHolder)
                 {
@@ -285,7 +292,6 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
     public void LoadBoardCatalog(string board)
     {
         clearThreads();
-        clearPosts();
 
         m_threadIds.Clear();
 
@@ -345,20 +351,18 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
         clearPosts();
 
         m_threadTitleLabel.Text = $"<span class=\"header\">{ChanApp.ChanClient.CurrentThread.Posts[0].Sub}</span>";
-
-
+        
         var imageIDs = new Dictionary<long, PostWidgetContainer>();
 
-        for (var i = 0; i < ChanApp.ChanClient.CurrentThread.Posts.Count; i++)
+        foreach (var post in ChanApp.ChanClient.CurrentThread.Posts)
         {
-            var post = ChanApp.ChanClient.CurrentThread.Posts[i];
             var widget = new PostWidgetContainer(post, m_postsListWidget.ChildWidget)
             {
-                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+                Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
             m_postWidgets.Add(post.No, widget);
 
-            if (post.Tim != null && post.Tim > 0)
+            if (post.Tim is > 0)
             {
                 imageIDs.Add((long)post.Tim, widget);
             }

@@ -497,10 +497,18 @@ public partial class Widget : IDisposable
     {
         m_x = x;
         m_y = y;
+        
+        // No point in dispatching anything in this case!
+        if (m_width == width && m_height == height)
+            return;
+        
         m_width = width;
         m_height = height;
 
         dispatchResize();
+
+        if (!DisableResizeEvents)
+            this.InvalidateAllParentsLayout();
     }
 
     public void Resize(int width, int height)
@@ -521,6 +529,9 @@ public partial class Widget : IDisposable
 
         dispatchResize();
         callResizeEvents();
+        
+        if (!DisableResizeEvents)
+            this.InvalidateAllParentsLayout();
     }
 
     public void TriggerRepaint()
@@ -802,8 +813,6 @@ public partial class Widget : IDisposable
         {
             foreach (var child in m_children)
             {
-                if (child == null)
-                    continue;
                 child.EnqueueLayout(doChildren);
             }
         }
@@ -891,12 +900,12 @@ public partial class Widget : IDisposable
         if (DisableResizeEvents)
             return;
 
-        var isFlusing = LayoutQueue.IsFlusing;
+        var isFlushing = LayoutQueue.IsFlushing;
 
         if (Layout != null)
-            isFlusing = Layout.PerformingPasses;
+            isFlushing = Layout.PerformingPasses;
 
-        if (!isFlusing)
+        if (!isFlushing)
         {
             if (Layout != null)
             {

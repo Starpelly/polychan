@@ -295,14 +295,12 @@ namespace Polychan.Framework.Platform.SDL3
                     break;
                 */
                     // @HACK
-                /*
                 case SDL_EventType.SDL_EVENT_KEY_DOWN:
                     if (e.key.key == SDL_Keycode.SDLK_F2)
                     {
-                        Application.DebugDrawing = !Application.DebugDrawing;
+                        Debugging.DebugDrawing = !Debugging.DebugDrawing;
                     }
                     break;
-                */
             }
         }
 

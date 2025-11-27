@@ -60,8 +60,6 @@ public class Application : IDisposable
     /// @FIX
     /// </summary>
     public static SKFont FontIconBig => Instance!.m_fontIconBig;
-    
-    internal static bool DebugDrawing = false;
 
     private readonly Clipboard s_clipboard;
     public static Clipboard Clipboard => Instance!.s_clipboard;
@@ -256,7 +254,7 @@ public class Application : IDisposable
         {
             var w = win.Value.ParentWidget;
             w.UpdateTopLevel(DeltaTiming.DT);
-            w.RenderTopLevel(Application.DebugDrawing);
+            w.RenderTopLevel(Framework.Debugging.DebugDrawing);
         }
     }
 

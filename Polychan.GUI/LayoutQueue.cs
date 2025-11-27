@@ -14,7 +14,7 @@ internal static class LayoutQueue
     // And I'll throw an exception or whatever.
     private static readonly Dictionary<Guid, DirtyWidget> s_dirtyWidgets = [];
 
-    public static bool IsFlusing { get; private set; } = false;
+    public static bool IsFlushing { get; private set; } = false;
 
     private const bool LogChanges = false;
 
@@ -71,13 +71,13 @@ internal static class LayoutQueue
             Console.ResetColor();
         }
 
-        IsFlusing = true;
+        IsFlushing = true;
         while (true)
         {
             if (!doOneFlush())
                 break;
         }
-        IsFlusing = false;
+        IsFlushing = false;
 
         if (hadWorkAll && LogChanges)
         {
