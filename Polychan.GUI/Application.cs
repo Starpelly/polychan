@@ -41,6 +41,7 @@ public class Application : IDisposable
     private readonly SKFont m_defaultFontBold;
     private readonly SKFont m_defaultFontBoldBig;
     private readonly SKFont m_fontIcon;
+    private readonly SKFont m_fontIconBig;
     private readonly Style m_defaultStyle;
     private readonly ColorPalette m_palette;
 
@@ -51,9 +52,15 @@ public class Application : IDisposable
 
     /// <summary>
     /// !!!TEMP!!!
+    /// @FIX
     /// </summary>
     public static SKFont FontIcon => Instance!.m_fontIcon;
-
+    /// <summary>
+    /// !!!TEMP!!!
+    /// @FIX
+    /// </summary>
+    public static SKFont FontIconBig => Instance!.m_fontIconBig;
+    
     internal static bool DebugDrawing = false;
 
     private readonly Clipboard s_clipboard;
@@ -131,10 +138,17 @@ public class Application : IDisposable
             Typeface = iconsTypeface,
             Size = iconFontSize
         };
+        m_fontIconBig = new SKFont
+        {
+            Edging = SKFontEdging.SubpixelAntialias,
+            Hinting = SKFontHinting.Slight,
+            Subpixel = true,
+            Typeface = iconsTypeface,
+            Size = 32
+        };
 
         m_palette = getDefaultColorPalette();
-
-
+        
         // Load default style last
         m_defaultStyle = new PhantomStyle();
     }

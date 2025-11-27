@@ -3,7 +3,6 @@ using Polychan.GUI;
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
 using SkiaSharp;
-using System.Diagnostics;
 using Polychan.API.Models;
 using Polychan.Widgets;
 
@@ -28,6 +27,11 @@ public class PolychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         {
         };
 
+        void OpenSettings()
+        {
+            new PreferencesDialog(this).Show();
+        }
+
         // Setup MenuBar
         {
             MenuBar = new(this)
@@ -37,7 +41,7 @@ public class PolychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
-            void AddMenu(string title, List<MenuAction> items)
+            void AddMenu(string title, MenuAction[] items)
             {
                 var menu = MenuBar.AddMenu(title);
                 foreach (var item in items)
@@ -46,9 +50,7 @@ public class PolychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 }
             }
             AddMenu("File", [
-                new(MaterialIcons.Settings, "Preferences", () => {
-                    new PreferencesDialog(this).Show();
-                }),
+                new(MaterialIcons.Settings, "Preferences", OpenSettings),
                 new("")
                 {
                     IsSeparator = true,
@@ -84,6 +86,22 @@ public class PolychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     new AboutDialog(this).Show();
                 })
             ]);
+        }
+        
+        // Setup ToolBar
+        {
+            ToolBar = new ToolBar(this)
+            {
+                Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+            };
+            ToolBar.AddAction(new MenuAction(MaterialIcons.Refresh, "Refresh"));
+            ToolBar.AddSeparator();
+            ToolBar.AddAction(new MenuAction(MaterialIcons.Settings, "Settings", OpenSettings));
+
+            new HLine(this)
+            {
+                Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+            };
         }
 
         CentralWidget = new(this)
@@ -155,7 +173,7 @@ public class PolychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 }
             }
 
-            CreateSeparator();
+            // CreateSeparator();
 
             // Threads list
             {

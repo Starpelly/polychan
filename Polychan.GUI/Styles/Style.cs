@@ -64,6 +64,7 @@ public abstract class Style
     }
     
     public abstract void DrawPushButton(SKCanvas canvas, PushButton button, StyleOptionButton option);
+    public abstract void DrawPanelButton(SKCanvas canvas, PanelButton button, StyleOptionPanelButton option);
     public abstract void DrawScrollBar(SKCanvas canvas, ScrollBar scrollBar, StyleOptionScrollBar option);
     public abstract void DrawShapedFrame(SKCanvas canvas, ShapedFrame frame, StyleOptionShapedFrame option);
 

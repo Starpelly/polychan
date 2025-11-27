@@ -14,23 +14,22 @@ namespace Polychan.GUI.Widgets
 
         public Orientation ScreenPosition { get; set; }
 
-        private const int MenuBarHeight = 24;
-
-        private const int BorderSize = 1;
-        private const bool DrawBorder = BorderSize > 0;
+        private const int MENU_BAR_HEIGHT = 24;
+        private const int BORDER_SIZE = 1;
+        private const bool DRAW_BORDER = BORDER_SIZE > 0;
 
         private int m_nextX = 0;
 
-        private List<Menu> m_menus = [];
+        private readonly List<Menu> m_menus = [];
 
         private Menu? m_openedMenu = null;
 
-        private MenuPopup m_stdPopup;
+        private readonly MenuPopup m_stdPopup;
         private bool m_popupOpen = false;
 
         public MenuBar(Widget? parent = null) : base(parent)
         {
-            Height = MenuBarHeight + BorderSize;
+            Height = MENU_BAR_HEIGHT + BORDER_SIZE;
             m_stdPopup = new MenuPopup(this);
             m_stdPopup.OnSubmitted = () =>
             {
@@ -44,13 +43,14 @@ namespace Polychan.GUI.Widgets
 
         private void AddMenu(Menu menu)
         {
-            if (m_menus.Contains(menu))
-                throw new Exception("Please don't add the same menu multiple times!");
+            // @NOTE - pelly, 11/26/25
+            // This is FINE, shouldn't throw an exception.
+            // if (m_menus.Contains(menu))
+            //    throw new Exception("Please don't add the same menu multiple times!");
 
             menu.SetPosition(m_nextX, 0);
-            m_nextX += menu.Width;
-            menu.Height = MenuBarHeight;
-
+            menu.Height = MENU_BAR_HEIGHT;
+            
             menu.OnHovered = () =>
             {
                 if (m_popupOpen && m_openedMenu != menu)
@@ -84,6 +84,8 @@ namespace Polychan.GUI.Widgets
             };
 
             m_menus.Add(menu);
+            
+            m_nextX += menu.Width;
         }
 
         public Menu AddMenu(string title)
@@ -104,14 +106,14 @@ namespace Polychan.GUI.Widgets
         {
             using var paint = new SKPaint();
 
-            if (DrawBorder)
+            if (DRAW_BORDER)
             {
                 paint.Color = Application.DefaultStyle.GetFrameColor();
                 canvas.DrawRect(0, 0, Width, Height, paint);
             }
 
             paint.Color = EffectivePalette.Get(ColorRole.Window);
-            canvas.DrawRect(0, 0, Width, Height - BorderSize, paint);
+            canvas.DrawRect(0, 0, Width, Height - BORDER_SIZE, paint);
         }
 
         public bool OnMouseDown(MouseEvent evt)

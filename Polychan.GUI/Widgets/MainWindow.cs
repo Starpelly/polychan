@@ -1,10 +1,12 @@
-﻿using SkiaSharp;
+﻿using System.Diagnostics;
+using SkiaSharp;
 
 namespace Polychan.GUI.Widgets;
 
 public class MainWindow : WindowWidget, IPaintHandler, IResizeHandler
 {
     public MenuBar? MenuBar { get; set; }
+    public ToolBar? ToolBar { get; set; }
     public Widget? CentralWidget = null;
 
     public MainWindow(Widget? parent = null) : base(WindowType.Window, parent)
@@ -22,32 +24,14 @@ public class MainWindow : WindowWidget, IPaintHandler, IResizeHandler
     public void OnResize(int width, int height)
     {
         MenuBar?.Resize(width, MenuBar.Height);
+        ToolBar?.Resize(width, ToolBar.Height);
     }
 
     public void SetIconFromStream(Stream imageStream)
     {
-        m_nativeWindow?.WindowHolder.Window.SetIconFromStream(imageStream);
+        Debug.Assert(m_nativeWindow != null);
+        m_nativeWindow.WindowHolder.Window.SetIconFromStream(imageStream);
     }
 
-    #endregion
-
-    #region Private methods
-
-    private void layout()
-    {
-        SKRect available = new SKRect(0, 0, Width, Height);
-
-        if (MenuBar != null)
-        {
-            MenuBar.Resize(Width, MenuBar.Height);
-            available.Top += MenuBar.Height;
-        }
-
-        if (CentralWidget != null)
-        {
-
-        }
-    }
-    
     #endregion
 }

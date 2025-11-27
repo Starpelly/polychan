@@ -244,6 +244,101 @@ public class PhantomStyle : Style
         }
     }
 
+    public override void DrawPanelButton(SKCanvas canvas, PanelButton button, StyleOptionPanelButton option)
+    {
+        using var paint = new SKPaint();
+
+        var isDefault = false;
+        var isOn = option.State.HasFlag(StateFlag.On);
+        var isHovering = option.State.HasFlag(StateFlag.MouseOver);
+        var isDown = option.State.HasFlag(StateFlag.Sunken);
+        var hasFocus = option.State.HasFlag(StateFlag.HasFocus);
+        var isEnabled = option.State.HasFlag(StateFlag.Enabled);
+
+        var outline = SwatchColor.Window_Outline;
+        var fill = SwatchColor.Button;
+        var specular = SwatchColor.Button_Specular;
+
+        // Paint background
+        if (isHovering || isDown)
+        {
+            if (isDown || !isEnabled || isHovering)
+            {
+                fill = SwatchColor.Button_Pressed;
+                specular = SwatchColor.Button_Pressed_Specular;
+            }
+            else if (isOn)
+            {
+                fill = SwatchColor.ScrollbarGutter;
+                specular = SwatchColor.Button_Pressed_Specular;
+            }
+            if (hasFocus || isDefault)
+            {
+                outline = SwatchColor.Highlight_Outline;
+            }
+
+            paint.IsAntialias = true;
+
+            // Fill
+            paint.Color = m_swatch.GetColor(fill);
+            canvas.DrawRoundRect(new SKRect(0, 0, button.Width, button.Height), new SKSize(PushButton_Rounding * 2, PushButton_Rounding * 2), paint);
+
+            // Stroke
+            paint.Style = SKPaintStyle.Stroke;
+            paint.StrokeWidth = 1.0f;
+            paint.Color = m_swatch.GetColor(outline);
+
+            var inset = paint.StrokeWidth / 2.0f;
+            canvas.DrawRoundRect(new SKRect(inset, inset, button.Width - inset, button.Height - inset), new SKSize(PushButton_Rounding, PushButton_Rounding), paint);
+
+            // Specular
+            paint.Style = SKPaintStyle.Stroke;
+            paint.StrokeWidth = 1.0f;
+            paint.Color = m_swatch.GetColor(specular);
+
+            inset += 1;
+            canvas.DrawRoundRect(new SKRect(inset, inset, button.Width - inset, button.Height - inset), new SKSize(PushButton_Rounding, PushButton_Rounding), paint);
+        }
+
+        canvas.Save();
+        
+        if (isDown)
+        {
+            canvas.Translate(1, 1);
+        }
+        
+        // Paint icon
+        if (option.Icon != null)
+        {
+            var icon = option.Icon;
+            
+            var metrics = Application.FontIconBig.Metrics;
+            var textHeight = (-metrics.Ascent) + metrics.Descent;
+            
+            paint.Reset();
+            paint.Color = m_swatch.GetColor(isEnabled ? SwatchColor.Text : SwatchColor.WindowText_Disabled);
+            
+            canvas.DrawText(icon, button.Width * 0.5f, textHeight + 2, SKTextAlign.Center, Application.FontIconBig, paint);
+        }
+
+        // Paint label
+        {
+            paint.Reset();
+            paint.Color = m_swatch.GetColor(isEnabled ? SwatchColor.Text : SwatchColor.WindowText_Disabled);
+
+            var metrics = Application.DefaultFont.Metrics;
+            var textHeight = (-metrics.Ascent) + metrics.Descent;
+            Application.DefaultFont.MeasureText(option.Text, out var bounds);
+
+            var labelX = (button.Width - bounds.Width) / 2;
+            var labelY = button.Height - 6;
+
+            canvas.DrawText(option.Text, new SKPoint(labelX, labelY), Application.DefaultFont, paint);
+        }
+        
+        canvas.Restore();
+    }
+    
     public override void DrawScrollBar(SKCanvas canvas, ScrollBar scrollBar, StyleOptionScrollBar option)
     {
         // Rects

@@ -9,7 +9,7 @@ namespace Polychan.GUI.Widgets;
 
 public partial class Widget : IDisposable
 {
-    private Guid m_uid = Guid.NewGuid();
+    private readonly Guid m_uid = Guid.NewGuid();
     public Guid Guid => m_uid;
 
     private string m_name = string.Empty;
@@ -52,10 +52,7 @@ public partial class Widget : IDisposable
     public int X
     {
         get => m_x;
-        set
-        {
-            m_x = value;
-        }
+        set => m_x = value;
     }
 
     /// <summary>
@@ -64,10 +61,7 @@ public partial class Widget : IDisposable
     public int Y
     {
         get => m_y;
-        set
-        {
-            m_y = value;
-        }
+        set => m_y = value;
     }
 
     /// <summary>

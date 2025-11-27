@@ -34,6 +34,13 @@ public class StyleOptionButton : StyleOption
     public string Text { get; set; } = string.Empty;
 }
 
+public class StyleOptionPanelButton : StyleOption
+{
+    public string Text { get; set; } = string.Empty;
+    public string? Icon { get; set; } = string.Empty;
+}
+
+
 public class StyleOptionScrollBar : StyleOptionComplex
 {
     public ScrollBar.SubControl Hovered { get; set; }

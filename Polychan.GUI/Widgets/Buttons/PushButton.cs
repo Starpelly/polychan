@@ -1,33 +1,23 @@
-﻿using Polychan.GUI.Styles;
-using SkiaSharp;
+﻿using SkiaSharp;
+using Polychan.GUI.Styles;
 
 namespace Polychan.GUI.Widgets;
 
-public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler, IMouseUpHandler, IMouseClickHandler
+public class PushButton : GenericButton, IPaintHandler
 {
-    public const int TextPaddingW = 16;
-    public const int TextPaddingH = 16;
+    private const int TEXT_PADDING_W = 16;
+    private const int TEXT_PADDING_H = 16;
 
     private string m_text = string.Empty;
     public string Text
     {
-        get
-        {
-            return m_text;
-        }
+        get => m_text;
         set
         {
             m_text = value;
             updateSize();
         }
     }
-
-    private bool m_hovering = false;
-    private bool m_pressed = false;
-
-    public Action? OnClicked;
-    public Action? OnPressed;
-    public Action? OnReleased;
 
     public PushButton(string text, Widget? parent = null) : base(parent)
     {
@@ -42,9 +32,9 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         };
         option.InitFrom(this);
 
-        if (m_hovering)
+        if (Hovering)
         {
-            if (m_pressed)
+            if (Pressed)
                 option.State |= Style.StateFlag.Sunken;
             else
                 option.State |= Style.StateFlag.MouseOver;
@@ -53,53 +43,8 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         Application.DefaultStyle.DrawPushButton(canvas, this, option);
     }
 
-    public void OnMouseEnter()
-    {
-        m_hovering = true;
-        MouseCursor.Set(MouseCursor.CursorType.Hand);
-
-        TriggerRepaint();
-    }
-
-    public void OnMouseLeave()
-    {
-        m_hovering = false;
-        MouseCursor.Set(MouseCursor.CursorType.Arrow);
-
-        TriggerRepaint();
-    }
-
-    public bool OnMouseDown(MouseEvent evt)
-    {
-        m_pressed = true;
-        OnPressed?.Invoke();
-
-        TriggerRepaint();
-
-        return true;
-    }
-
-    public bool OnMouseUp(MouseEvent evt)
-    {
-        m_pressed = false;
-        OnReleased?.Invoke();
-
-        TriggerRepaint();
-
-        return true;
-    }
-
-    public bool OnMouseClick(MouseEvent evt)
-    {
-        OnClicked?.Invoke();
-    
-        TriggerRepaint();
-
-        return true;
-    }
-
     private void updateSize()
     {
-        Resize((int)Application.DefaultFont.MeasureText(m_text) + TextPaddingW, (int)Application.DefaultFont.Size + 2 + TextPaddingH);
+        Resize((int)Application.DefaultFont.MeasureText(m_text) + TEXT_PADDING_W, (int)Application.DefaultFont.Size + 2 + TEXT_PADDING_H);
     }
 }
