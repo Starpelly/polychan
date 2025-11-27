@@ -9,19 +9,20 @@ namespace Polychan.Widgets;
 
 internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
 {
-    private const int MaxImageWidth = 75;
+    private const int MAX_IMAGE_WIDTH = 75;
     private static readonly Padding Padding = new(8);
 
-    public CatalogThread Thread;
+    private readonly CatalogThread m_thread;
 
     private readonly Image m_previewImage;
+    private readonly Label? m_subjectLabel;
     private readonly Label m_commentLabel;
 
     private bool m_hovering = false;
 
     public ThreadWidget(CatalogThread thread, Widget? parent = null) : base(parent)
     {
-        Thread = thread;
+        m_thread = thread;
         Name = "A thread widget!";
         ShouldCache = true;
 
@@ -37,12 +38,27 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEn
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
 
+        if (!string.IsNullOrEmpty(thread.Sub))
+        {
+            m_subjectLabel = new Label(this)
+            {
+                X = Padding.Left,
+                Y = Padding.Top,
+                
+                Text = $"<span class=\"name\">{thread.Sub}</span>",
+                
+                WordWrap = true,
+                CatchCursorEvents = false,
+            };
+        }
+
         m_commentLabel = new Label(this)
         {
             X = Padding.Left,
-            Y = Padding.Top,
+            Y = Padding.Top + (m_subjectLabel != null ? m_subjectLabel.Height : 0),
 
             Text = decoded,
+            
             WordWrap = true,
             CatchCursorEvents = false,
             ShouldCache = false
@@ -56,9 +72,9 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEn
         var newWidth = image.Width;
         var newHeight = image.Height;
 
-        if (newWidth > MaxImageWidth)
+        if (newWidth > MAX_IMAGE_WIDTH)
         {
-            newWidth = MaxImageWidth;
+            newWidth = MAX_IMAGE_WIDTH;
             newHeight = (int)(((float)newWidth / image.Width) * image.Height);
         }
 
@@ -125,9 +141,9 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEn
             iconX += (int)(iconWidth + labelWidth + spacing + 8);
         }
 
-        drawIconText(MaterialDesign.MaterialIcons.ModeComment, Thread.Replies.ToString());
-        drawIconText(MaterialDesign.MaterialIcons.Image, Thread.Images.ToString());
-        drawIconText(MaterialDesign.MaterialIcons.AccessTime, unixToTimeAgo(Thread.Time));
+        drawIconText(MaterialDesign.MaterialIcons.ModeComment, m_thread.Replies.ToString());
+        drawIconText(MaterialDesign.MaterialIcons.Image, m_thread.Images.ToString());
+        drawIconText(MaterialDesign.MaterialIcons.AccessTime, unixToTimeAgo(m_thread.Time));
 
         canvas.Restore();
     }
@@ -181,7 +197,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEn
     {
         if (evt.button == MouseButton.Left)
         {
-            ChanApp.LoadThread(Thread.No.ToString());
+            ChanApp.LoadThread(m_thread.No.ToString());
         }
 
         return true;
@@ -193,13 +209,26 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEn
     {
         int newHeight = m_previewImage.Height;
 
-        m_commentLabel.X = Padding.Left + (m_previewImage.Bitmap != null ? (m_previewImage.Width + 8) : 0);
+        var labelX = Padding.Left + (m_previewImage.Bitmap != null ? (m_previewImage.Width + 8) : 0);
+
+        if (m_subjectLabel != null)
+        {
+            m_subjectLabel.X = labelX;
+            m_subjectLabel.Width = Width - m_subjectLabel.X - Padding.Right;
+            m_subjectLabel.Height = m_subjectLabel.MeasureHeightFromWidth(m_subjectLabel.Width);
+        }
+        
+        m_commentLabel.X = labelX;
+        m_commentLabel.Y = m_subjectLabel != null ? (m_subjectLabel.Y + m_subjectLabel.Height) : m_commentLabel.Y;
         m_commentLabel.Width = Width - m_commentLabel.X - Padding.Right;
         m_commentLabel.Height = m_commentLabel.MeasureHeightFromWidth(m_commentLabel.Width);
 
-        if (m_commentLabel.Height > newHeight)
+        var subjectHeight = m_subjectLabel?.Height ?? 0;
+        var commentHeight = m_commentLabel.Height;
+        
+        if (subjectHeight + commentHeight > newHeight)
         {
-            newHeight = m_commentLabel.Height;
+            newHeight = subjectHeight + commentHeight;
         }
 
         // newHeight = Math.Max(100, newHeight);

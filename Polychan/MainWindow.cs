@@ -30,6 +30,11 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
             new PreferencesDialog(this).Show();
         }
 
+        void Refresh()
+        {
+            ChanApp.LoadCatalog("g");
+        }
+
         // Setup MenuBar
         {
             MenuBar = new(this)
@@ -58,7 +63,7 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
                 }),
             ]);
             AddMenu("Actions", [
-                new(MaterialIcons.Refresh, "Refresh All"),
+                new(MaterialIcons.Refresh, "Refresh All", Refresh),
             ]);
             AddMenu("Tools", [
                 new(MaterialIcons.Cloud, "Thread Downloader"),
@@ -92,7 +97,9 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
             {
                 Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
-            ToolBar.AddAction(new MenuAction(MaterialIcons.Refresh, "Refresh"));
+            ToolBar.AddAction(new MenuAction(MaterialIcons.Add, "New"));
+            ToolBar.AddSeparator();
+            ToolBar.AddAction(new MenuAction(MaterialIcons.Refresh, "Refresh", Refresh));
             ToolBar.AddSeparator();
             ToolBar.AddAction(new MenuAction(MaterialIcons.Settings, "Settings", OpenSettings));
 
