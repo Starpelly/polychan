@@ -440,11 +440,6 @@ public partial class Widget : IDisposable
         }
     }
 
-    public void SetModal(bool modal)
-    {
-
-    }
-
     /// <summary>
     /// Sets the parent of the widget to the parent. The widget is moved to position (0, 0) in its new parent.
     /// 
