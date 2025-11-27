@@ -13,10 +13,8 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
     private readonly List<ThreadWidget> m_threadWidgets = [];
     private readonly Dictionary<int, PostWidgetContainer> m_postWidgets = [];
 
-    private ScrollArea? m_threadsListWidget;
-    private ScrollArea? m_postsListWidget;
-
-    public readonly SKFont IconsFont;
+    private readonly ScrollArea? m_threadsListWidget;
+    private readonly ScrollArea? m_postsListWidget;
 
     private readonly Label m_boardTitleLabel;
     private readonly Label m_threadTitleLabel;
