@@ -32,7 +32,7 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
 
         void Refresh()
         {
-            ChanApp.LoadCatalog("g");
+            ChanApp.LoadCatalog(ChanApp.ChanClient.CurrentBoard);
         }
 
         // Setup MenuBar
@@ -357,7 +357,7 @@ public class PolychanWindow : NormalWindow, IResizeHandler, IMouseDownHandler
 
         clearPosts();
 
-        m_threadTitleLabel.Text = $"<span class=\"header\">{ChanApp.ChanClient.CurrentThread.Posts[0].Sub}</span>";
+        m_threadTitleLabel.Text = $"<span class=\"header\">/{ChanApp.ChanClient.CurrentBoard}/{threadID}/ - {ChanApp.ChanClient.CurrentThread.Posts[0].Sub}</span>";
         
         var imageIDs = new Dictionary<long, PostWidgetContainer>();
 
