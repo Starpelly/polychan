@@ -311,11 +311,6 @@ public class MainWindow : NormalWindow
                 {
                     Fitting = FitPolicy.ExpandingPolicy
                 };
-                m_postTabs.AddTab(new Rect(SKColors.Red, m_postTabs)
-                {
-                    Width = 32,
-                    Height = 32
-                }, "Red Square");
             }
             
             // HISTORY PAGE
