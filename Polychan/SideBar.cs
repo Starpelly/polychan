@@ -7,8 +7,12 @@ namespace Polychan.App;
 
 public class SideBar : Widget, IPaintHandler
 {
-    public SideBar(Widget? parent = null) : base(parent)
+    private MainWindow m_mainWindow;
+    
+    public SideBar(MainWindow window, Widget? parent = null) : base(parent)
     {
+        m_mainWindow = window;
+        
         Layout = new VBoxLayout()
         {
             Padding = new Padding(8),
@@ -24,9 +28,9 @@ public class SideBar : Widget, IPaintHandler
             };
         }
 
-        selectable("Board", null);
+        selectable("Board", m_mainWindow.LoadPage_Board);
         selectable("Saved", null);
-        selectable("History", null);
+        selectable("History", m_mainWindow.LoadPage_History);
         selectable("Search", null);
     }
 

@@ -4,17 +4,129 @@ using Polychan.GUI;
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
 using Polychan.App.Widgets;
+using Microsoft.Data.Sqlite;
 
 namespace Polychan.App;
 
 public class MainWindow : NormalWindow
 {
+    public enum SideBarOptions
+    {
+        Boards,
+        Saved,
+        History,
+        Search
+    }
+    
+    private readonly Dictionary<SideBarOptions, NullWidget> m_pages = [];
+    
     private readonly CatalogListView m_catalogListView;
     private readonly TabsController m_postTabs;
+    
+    private static readonly string DbPath = 
+        Path.Combine(Settings.GetAppFolder(), "4chan.db");
 
+    private readonly ThreadHistoryDatabase m_historyDb;
+
+    class ThreadHistoryEntry
+    {
+        public long Id { get; set; }
+        public int ThreadId { get; set; }
+        public string Board { get; set; }
+        public string? Title { get; set; }
+        public DateTime VisitedAt { get; set; }
+    }
+
+    class ThreadHistoryDatabase
+    {
+        private readonly string m_connectionString;
+
+        public ThreadHistoryDatabase(string dbPath)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+            m_connectionString = $"Data Source={dbPath}";
+        }
+
+        public void Initialize()
+        {
+            using var conn = new SqliteConnection(m_connectionString);
+            conn.Open();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText =
+                """
+                CREATE TABLE IF NOT EXISTS thread_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    thread_id INTEGER NOT NULL,
+                    board TEXT NOT NULL,
+                    title TEXT,
+                    visited_at TEXT NOT NULL,
+                    UNIQUE(thread_id, board)
+                ); 
+                """;
+
+            cmd.ExecuteNonQuery();
+        }
+
+        public void SaveVisit(int threadId, string board, string? title)
+        {
+            using var conn = new SqliteConnection(m_connectionString);
+            conn.Open();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText =
+                """
+                INSERT INTO thread_history (thread_id, board, title, visited_at)
+                VALUES ($id, $board, $title, $ts)
+                ON CONFLICT(thread_id, board) DO UPDATE SET
+                    title = $title,
+                    visited_at = $ts;
+                """;
+            cmd.Parameters.AddWithValue("$id", threadId);
+            cmd.Parameters.AddWithValue("board", board);
+            cmd.Parameters.AddWithValue("$title", title ?? "");
+            cmd.Parameters.AddWithValue("$ts", DateTime.UtcNow.ToString("o"));
+            
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<ThreadHistoryEntry> LoadHistory()
+        {
+            var results = new List<ThreadHistoryEntry>();
+            using var conn = new SqliteConnection(m_connectionString);
+            conn.Open();
+            
+            var cmd = conn.CreateCommand();
+            cmd.CommandText =
+                """
+                SELECT id, thread_id, board, title, visited_at
+                FROM thread_history
+                ORDER BY visited_at DESC;
+                """;
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                results.Add(new ThreadHistoryEntry
+                {
+                    Id = reader.GetInt64(0),
+                    ThreadId = reader.GetInt32(1),
+                    Board = reader.GetString(2),
+                    Title = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    VisitedAt = DateTime.Parse(reader.GetString(4))
+                });
+            }
+
+            return results;
+        }
+    }
+    
     public MainWindow()
     {
-        Layout = new VBoxLayout();//
+        m_historyDb = new ThreadHistoryDatabase(DbPath);
+        m_historyDb.Initialize();
+        
+        Layout = new VBoxLayout();
 
         void OpenSettings()
         {
@@ -174,37 +286,70 @@ public class MainWindow : NormalWindow
             
             // SideBar
             {
-                new SideBar(mainHolder)
+                new SideBar(this, mainHolder)
                 {
                     Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                     Width = 140
                 };
-                CreateSeparator();
+                CreateSeparator(mainHolder);
             }
 
-            // Threads list
-            m_catalogListView = new CatalogListView(mainHolder);
+            // BOARD PAGE
+            {
+                var boardPage = m_pages[SideBarOptions.Boards] = new NullWidget(mainHolder)
+                {
+                    Fitting = FitPolicy.ExpandingPolicy,
+                    Layout = new HBoxLayout()
+                };
+                
+                // Threads list
+                m_catalogListView = new CatalogListView(boardPage);
             
-            CreateSeparator();
+                CreateSeparator(boardPage);
 
-            m_postTabs = new TabsController(mainHolder)
-            {
-                Fitting = FitPolicy.ExpandingPolicy
-            };
-            m_postTabs.AddTab(new Rect(SKColors.Red, m_postTabs)
-            {
-                Width = 32,
-                Height = 32
-            }, "Red Square");
+                m_postTabs = new TabsController(boardPage)
+                {
+                    Fitting = FitPolicy.ExpandingPolicy
+                };
+                m_postTabs.AddTab(new Rect(SKColors.Red, m_postTabs)
+                {
+                    Width = 32,
+                    Height = 32
+                }, "Red Square");
+            }
             
-            void CreateSeparator()
+            // HISTORY PAGE
             {
-                new VLine(mainHolder)
+                var historyPage = m_pages[SideBarOptions.History] = new NullWidget(mainHolder)
+                {
+                    Fitting = FitPolicy.ExpandingPolicy,
+                    Visible = false,
+                    // Layout = new HBoxLayout()
+                    Layout = new VBoxLayout()
+                };
+
+                var toolbar = new ToolBar(historyPage)
+                {
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+                };
+                toolbar.AddAction(new MenuAction(MaterialIcons.Refresh, "Refresh", null));
+                toolbar.AddAction(new MenuAction(MaterialIcons.Delete, "Clear History", null));
+                new HLine(historyPage)
+                {
+                    Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+                };
+            }
+
+            void CreateSeparator(Widget parent)
+            {
+                new VLine(parent)
                 {
                     Fitting = new FitPolicy(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                 };
             }
         }
+        
+        switchPage(SideBarOptions.Boards);
     }
     
     public static Label TabInfoWidgetThing(Widget parent)
@@ -244,7 +389,39 @@ public class MainWindow : NormalWindow
 
     public void LoadThreadPosts(string threadId)
     {
+        m_historyDb.SaveVisit(int.Parse(threadId), ChanApp.Client.CurrentBoard,ChanApp.Client.CurrentThread.Posts[0].Sub);
+        
         var view = new PostsView(threadId, m_postTabs);
         m_postTabs.AddTab(view, threadId);
+    }
+    
+    public void LoadPage_Board()
+    {
+        switchPage(SideBarOptions.Boards);
+    }
+
+    public void LoadPage_History()
+    {
+        switchPage(SideBarOptions.History);
+        
+        var history = m_historyDb.LoadHistory();
+        foreach (var thread in history)
+        {
+            new Label(m_pages[SideBarOptions.History])
+            {
+                Text = thread.Title ?? "NO TITLE",
+            };
+        }
+    }
+
+    private void switchPage(SideBarOptions option)
+    {
+        foreach (var page in m_pages)
+        {
+            if (page.Key == option)
+                page.Value.Visible = true;
+            else
+                page.Value.Visible = false;
+        }
     }
 }
