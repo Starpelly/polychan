@@ -102,16 +102,17 @@ public class FourChanClient
         };
     }
 
-    public async Task<Models_Thread> GetThreadPostsAsync(string threadID)
+    public async Task<Models_Thread> GetThreadPostsAsync(long threadId)
     {
-        var url = $"https://{Domains.Api}/{CurrentBoard}/thread/{threadID}.json";
+        var url = $"https://{Domains.Api}/{CurrentBoard}/thread/{threadId}.json";
         var json = await m_httpClient.GetStringAsync(url);
 
         var result = JsonConvert.DeserializeObject<Models_Thread>(json);
+        result.OriginalJson = json;
         return result;
     }
 
-    public async Task<SKImage?> DownloadThumbnailAsync(long tim)
+    public async Task<SKImage?> DownloadThumbnailAsync(AttachmentID tim)
     {
         string url = $"https://{Domains.UserContent}/{CurrentBoard}/{tim}s.jpg";
 
@@ -145,18 +146,21 @@ public class FourChanClient
         }
     }
 
-    public async Task LoadThumbnailsAsync(IEnumerable<long> imageIds, Action<long, SKImage?> onComplete)
+    public async Task LoadThumbnailsAsync(IEnumerable<(PostID thread, AttachmentID? attachment)> imageIds, Action<PostID, SKImage?> onComplete)
     {
         var tasks = imageIds.Select(async tim =>
         {
             await m_throttler.WaitAsync();
             try
             {
-                var img = await DownloadThumbnailAsync(tim);
-
-                if (img != null)
+                if (tim.attachment != null)
                 {
-                    onComplete.Invoke(tim, img);
+                    var img = await DownloadThumbnailAsync((AttachmentID)tim.attachment);
+
+                    if (img != null)
+                    {
+                        onComplete.Invoke(tim.thread, img);
+                    }
                 }
             }
             finally

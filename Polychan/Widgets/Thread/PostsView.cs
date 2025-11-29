@@ -6,37 +6,23 @@ namespace Polychan.App;
 
 public class PostsView : Widget
 {
-    private readonly Dictionary<int, PostWidgetContainer> m_postWidgets = [];
+    private readonly Dictionary<PostID, PostWidgetContainer> m_postWidgets = [];
     
     private readonly ScrollArea? m_postsListWidget;
     private readonly Label m_threadTitleLabel;
     
-    public PostsView(string threadID, Widget? parent = null) : base(parent)
+    public PostsView(long threadId, Widget? parent = null) : base(parent)
     {
         Name = "Posts View";
         CatchCursorEvents = false;
 
         Fitting = FitPolicy.ExpandingPolicy;
         Layout = new VBoxLayout();
-        var postsListHolder = this;
         
-        /*
-        var postsListHolder = new NullWidget(this)
-        {
-            Fitting = FitPolicy.ExpandingPolicy,
-            Width = 500,
-            Height = 500,
+        m_threadTitleLabel = MainWindow.TabInfoWidgetThing(this);
+        m_threadTitleLabel.Text = $"<span class=\"header\">/{ChanApp.Client.CurrentBoard}/{threadId}/ - {ChanApp.Client.CurrentThread.Posts[0].Sub}</span>";
 
-            Layout = new VBoxLayout
-            {
-            }
-        };
-        */
-
-        m_threadTitleLabel = MainWindow.TabInfoWidgetThing(postsListHolder);
-        m_threadTitleLabel.Text = $"<span class=\"header\">/{ChanApp.Client.CurrentBoard}/{threadID}/ - {ChanApp.Client.CurrentThread.Posts[0].Sub}</span>";
-
-        m_postsListWidget = new ScrollArea(postsListHolder)
+        m_postsListWidget = new ScrollArea(this)
         {
             Fitting = FitPolicy.ExpandingPolicy,
             Name = "Main Content Holder"
@@ -55,8 +41,6 @@ public class PostsView : Widget
             Name = "Posts Lists Holder"
         };
         
-        var imageIDs = new Dictionary<long, PostWidgetContainer>();
-
         foreach (var post in ChanApp.Client.CurrentThread.Posts)
         {
             var widget = new PostWidgetContainer(this, post, m_postsListWidget.ChildWidget)
@@ -64,39 +48,18 @@ public class PostsView : Widget
                 Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
             m_postWidgets.Add(post.No, widget);
-
-            if (post.Tim is > 0)
-            {
-                imageIDs.Add((long)post.Tim, widget);
-            }
         }
 
         LoadPostPreviews(m_postWidgets);
-
-        // Load thumbnails for posts
-        _ = ChanApp.Client.LoadThumbnailsAsync(imageIDs.Keys, (tim, image) =>
-        {
-            if (image != null)
-            {
-                imageIDs[tim].Test.SetBitmapPreview(image);
-            }
-        });
     }
     
-    public void LoadPostPreviews(Dictionary<int, PostWidgetContainer> widgetsToUpdate)
+    public void LoadPostPreviews(Dictionary<PostID, PostWidgetContainer> widgetsToUpdate)
     {
-        var refPosts = new Dictionary<int, List<PostWidgetContainer>>();
-        var imageIDs = new Dictionary<long, PostWidgetContainer>();
+        var refPosts = new Dictionary<PostID, List<PostWidgetContainer>>();
 
         foreach (var key in widgetsToUpdate.Keys)
         {
             refPosts.Add(key, []);
-
-            var post = widgetsToUpdate[key].ApiPost;
-            if (post.Tim != null && post.Tim > 0)
-            {
-                imageIDs.Add((long)post.Tim, widgetsToUpdate[key]);
-            }
         }
 
         foreach (var widget in m_postWidgets)
@@ -127,11 +90,12 @@ public class PostsView : Widget
         }
 
         // Load thumbnails for posts
-        _ = ChanApp.Client.LoadThumbnailsAsync(imageIDs.Keys, (tim, image) =>
+        var tuples = widgetsToUpdate.Select(c => (c.Key, c.Value.ApiPost.Tim));
+        _ = ChanApp.Client.LoadThumbnailsAsync(tuples, (postId, image) =>
         {
             if (image != null)
             {
-                imageIDs[tim].Test.SetBitmapPreview(image);
+                widgetsToUpdate[postId].Widget.SetBitmapPreview(image);
             }
         });
     }

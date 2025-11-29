@@ -265,13 +265,13 @@ public class MainWindow : NormalWindow
         m_catalogListView.T();
     }
 
-    public void LoadThreadPosts(string threadId)
+    public void LoadThreadPosts(API.Models.Thread thread, long threadId)
     {
-        ChanApp.HistoryDb.SaveVisit(int.Parse(threadId), ChanApp.Client.CurrentBoard,
-            ChanApp.Client.CurrentThread.Posts[0].Sub);
-
         var view = new PostsView(threadId, m_postTabs);
-        m_postTabs.AddTab(view, threadId);
+        m_postTabs.AddTab(view, $"{threadId}");
+
+        ChanApp.HistoryDb.SaveVisit(threadId, ChanApp.Client.CurrentBoard,
+            thread.OriginalJson, m_catalogListView.Threads[threadId].PreviewImage.Bitmap.EncodedData.ToArray());
     }
 
     public void LoadPage_Board()

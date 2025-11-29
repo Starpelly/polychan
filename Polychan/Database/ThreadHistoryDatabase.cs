@@ -7,7 +7,8 @@ public class ThreadHistoryEntry
     public long Id { get; set; }
     public int ThreadId { get; set; }
     public string Board { get; set; }
-    public string? Title { get; set; }
+    public string Json { get; set; }
+    public byte[]? Thumbnail { get; set; }
     public DateTime VisitedAt { get; set; }
 }
 
@@ -33,7 +34,8 @@ public class ThreadHistoryDatabase
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 thread_id INTEGER NOT NULL,
                 board TEXT NOT NULL,
-                title TEXT,
+                json TEXT NOT NULL,
+                thumbnail BLOB,
                 visited_at TEXT NOT NULL,
                 UNIQUE(thread_id, board)
             ); 
@@ -42,7 +44,7 @@ public class ThreadHistoryDatabase
         cmd.ExecuteNonQuery();
     }
 
-    public void SaveVisit(int threadId, string board, string? title)
+    public void SaveVisit(long threadId, string board, string json, byte[] thumbnail)
     {
         using var conn = new SqliteConnection(m_connectionString);
         conn.Open();
@@ -50,15 +52,16 @@ public class ThreadHistoryDatabase
         var cmd = conn.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO thread_history (thread_id, board, title, visited_at)
-            VALUES ($id, $board, $title, $ts)
+            INSERT INTO thread_history (thread_id, board, json, thumbnail, visited_at)
+            VALUES ($id, $board, $json, $thumbnail, $ts)
             ON CONFLICT(thread_id, board) DO UPDATE SET
-                title = $title,
+                json = $json,
                 visited_at = $ts;
             """;
         cmd.Parameters.AddWithValue("$id", threadId);
-        cmd.Parameters.AddWithValue("board", board);
-        cmd.Parameters.AddWithValue("$title", title ?? "");
+        cmd.Parameters.AddWithValue("$board", board);
+        cmd.Parameters.AddWithValue("$json", json);
+        cmd.Parameters.AddWithValue("$thumbnail", thumbnail);
         cmd.Parameters.AddWithValue("$ts", DateTime.UtcNow.ToString("o"));
 
         cmd.ExecuteNonQuery();
@@ -73,7 +76,7 @@ public class ThreadHistoryDatabase
         var cmd = conn.CreateCommand();
         cmd.CommandText =
             """
-            SELECT id, thread_id, board, title, visited_at
+            SELECT *
             FROM thread_history
             ORDER BY visited_at DESC;
             """;
@@ -86,8 +89,9 @@ public class ThreadHistoryDatabase
                 Id = reader.GetInt64(0),
                 ThreadId = reader.GetInt32(1),
                 Board = reader.GetString(2),
-                Title = reader.IsDBNull(3) ? null : reader.GetString(3),
-                VisitedAt = DateTime.Parse(reader.GetString(4))
+                Json = reader.GetString(3),
+                Thumbnail = reader.IsDBNull(4) ? null : reader.GetFieldValue<byte[]>(4),
+                VisitedAt = DateTime.Parse(reader.GetString(5))
             });
         }
 

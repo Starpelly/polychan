@@ -6,11 +6,12 @@ namespace Polychan.App.Widgets;
 
 public class CatalogListView : Widget
 {
-    private readonly List<ThreadTicketWidget> m_threadWidgets = [];
-    private readonly Dictionary<long, ThreadTicketWidget> m_threadIds = [];
+    private readonly Dictionary<Int64, ThreadTicketWidget> m_threadWidgets = [];
     
     private readonly ScrollArea? m_threadsListWidget;
     private readonly Label m_boardTitleLabel;
+    
+    public IReadOnlyDictionary<Int64, ThreadTicketWidget> Threads => m_threadWidgets;
     
     public CatalogListView(Widget? parent = null) : base(parent)
     {
@@ -54,7 +55,7 @@ public class CatalogListView : Widget
 
     public void LoadCatalog(string board)
     {
-        m_threadIds.Clear();
+        m_threadWidgets.Clear();
 
         if (m_threadsListWidget == null)
             return;
@@ -66,15 +67,10 @@ public class CatalogListView : Widget
             {
                 var widget = new ThreadTicketWidget(thread, m_threadsListWidget.ChildWidget)
                 {
-                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                     Height = 50,
                 };
-                m_threadWidgets.Add(widget);
-
-                if (thread.Tim != null && thread.Tim > 0)
-                {
-                    m_threadIds.Add((long)thread.Tim, widget);
-                }
+                m_threadWidgets.Add(thread.No, widget);
             }
         }
 
@@ -94,11 +90,12 @@ public class CatalogListView : Widget
         // -pelly
 
         // Load thumbnails for threads
-        _ = ChanApp.Client.LoadThumbnailsAsync(m_threadIds.Keys, (tim, image) =>
+        var tuples = m_threadWidgets.Select(c => (c.Key, c.Value.ApiThread.Tim));
+        _ = ChanApp.Client.LoadThumbnailsAsync(tuples, (postId, image) =>
         {
             if (image != null)
             {
-                m_threadIds[tim].SetBitmapPreview(image);
+                m_threadWidgets[postId].SetBitmapPreview(image);
             }
         });
     }
@@ -110,7 +107,7 @@ public class CatalogListView : Widget
 
         foreach (var widget in m_threadWidgets)
         {
-            widget.Dispose(); // I'm thinking this should defer to the next event loop? It could cause problems...
+            widget.Value.Dispose(); // I'm thinking this should defer to the next event loop? It could cause problems...
         }
         m_threadWidgets.Clear();
         m_threadsListWidget.VerticalScrollbar.Value = 0;

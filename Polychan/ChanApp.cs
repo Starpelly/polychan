@@ -23,6 +23,8 @@ public static class ChanApp
 
         Client = new FourChanClient();
         Client.Boards = Client.GetBoardsAsync().GetAwaiter().GetResult();
+        
+        HistoryDb.Initialize();
     }
 
     public static void Start()
@@ -60,12 +62,12 @@ public static class ChanApp
         MainWindow.Title = $"Polychan - /{board}/";
     }
 
-    public static void LoadThread(string threadID)
+    public static void LoadThread(long threadId)
     {
-        Client.CurrentThread = Client.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
+        Client.CurrentThread = Client.GetThreadPostsAsync(threadId).GetAwaiter().GetResult();
 
-        MainWindow.LoadThreadPosts(threadID);
-        MainWindow.Title = $"Polychan - /{Client.CurrentBoard}/{threadID}/ - {Client.CurrentThread.Posts[0].Sub}";
+        MainWindow.LoadThreadPosts(Client.CurrentThread, threadId);
+        MainWindow.Title = $"Polychan - /{Client.CurrentBoard}/{threadId}/ - {Client.CurrentThread.Posts[0].Sub}";
     }
 
     public static string GetAppFolder()

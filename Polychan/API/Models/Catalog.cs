@@ -27,7 +27,7 @@ public class CatalogThread
 {
     /// <summary>The numeric post ID.</summary>
     [JsonProperty("no")]
-    public int No { get; set; }
+    public long No { get; set; }
 
     /// <summary>Thread ID this post is replying to. Zero for OP.</summary>
     [JsonProperty("resto")]
@@ -81,9 +81,12 @@ public class CatalogThread
     [JsonProperty("com")]
     public string Com { get; set; } = string.Empty;
 
-    /// <summary>Timestamp with microtime of uploaded image.</summary>
+    /// <summary>
+    /// Unix timestamp + microtime that an image was uploaded
+    /// This can also be used to grab the image attached to the post.
+    /// </summary>
     [JsonProperty("tim")]
-    public long? Tim { get; set; }
+    public AttachmentID? Tim { get; set; }
 
     /// <summary>Original filename as uploaded.</summary>
     [JsonProperty("filename")]

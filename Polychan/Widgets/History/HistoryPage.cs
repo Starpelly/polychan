@@ -25,10 +25,12 @@ public class HistoryPage : Widget
         var history = ChanApp.HistoryDb.LoadHistory();
         foreach (var thread in history)
         {
+            /*
             new Label(this)
             {
                 Text = thread.Title ?? "NO TITLE",
             };
+            */
         }
     }
 }

@@ -1,11 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿global using PostID = long;
+global using AttachmentID = long;
+
+using Newtonsoft.Json;
 
 namespace Polychan.API.Models;
+
+public class Model
+{
+    [JsonIgnore]
+    public string OriginalJson = string.Empty;
+}
 
 /// <summary>
 /// A full thread, consisting of the OP and all replies.
 /// </summary>
-public class Thread
+public class Thread : Model
 {
     [JsonIgnore]
     public int No => Posts[0].No;
@@ -17,7 +26,7 @@ public class Thread
 /// <summary>
 /// A single post within a thread, including the OP.
 /// </summary>
-public class Post
+public class Post : Model
 {
     [JsonProperty("no")]
     public int No;
@@ -72,7 +81,7 @@ public class Post
     /// This can also be used to grab the image attached to the post.
     /// </summary>
     [JsonProperty("tim")]
-    public long? Tim;
+    public AttachmentID? Tim;
 
     [JsonProperty("filename")]
     public string Filename = string.Empty;

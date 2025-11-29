@@ -23,7 +23,7 @@ public class PostWidgetContainer : Widget, IPaintHandler
 
     public Post ApiPost => m_postWidget.ApiPost;
     public List<string> ReferencedPosts => m_postWidget.ReferencedPosts;
-    public PostWidget Test => m_postWidget; // @TEMP
+    public PostWidget Widget => m_postWidget; // @TEMP
     
     public PostWidgetContainer(PostsView view, Post post, Widget? parent = null) : base(parent)
     {
@@ -110,7 +110,7 @@ public class PostWidgetContainer : Widget, IPaintHandler
             },
         };
 
-        var pw = new Dictionary<int, PostWidgetContainer>(replies.Count);
+        var pw = new Dictionary<PostID, PostWidgetContainer>(replies.Count);
         foreach (var item in replies)
         {
             var widget = new PostWidgetContainer(m_view, item.m_postWidget.ApiPost, m_repliesHolder)

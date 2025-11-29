@@ -7,7 +7,7 @@ using Polychan.API.Models;
 
 namespace Polychan.App.Widgets;
 
-internal class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
+public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
 {
     private const int MAX_IMAGE_WIDTH = 75;
     private static readonly Padding Padding = new(8);
@@ -19,6 +19,9 @@ internal class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IM
     private readonly Label m_commentLabel;
 
     private bool m_hovering = false;
+    
+    public Image PreviewImage => m_previewImage;
+    public CatalogThread ApiThread => m_thread;
 
     public ThreadTicketWidget(CatalogThread thread, Widget? parent = null) : base(parent)
     {
@@ -199,7 +202,7 @@ internal class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IM
     {
         if (evt.button == MouseButton.Left)
         {
-            ChanApp.LoadThread(m_thread.No.ToString());
+            ChanApp.LoadThread(m_thread.No);
         }
 
         return true;
