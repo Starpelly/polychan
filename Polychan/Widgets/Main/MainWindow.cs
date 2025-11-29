@@ -1,10 +1,9 @@
 ﻿using MaterialDesign;
-using SkiaSharp;
 using Polychan.GUI;
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
 using Polychan.App.Widgets;
-using Microsoft.Data.Sqlite;
+using Polychan.App.Widgets.History;
 
 namespace Polychan.App;
 
@@ -17,115 +16,14 @@ public class MainWindow : NormalWindow
         History,
         Search
     }
-    
-    private readonly Dictionary<SideBarOptions, NullWidget> m_pages = [];
-    
+
+    private readonly Dictionary<SideBarOptions, Widget> m_pages = [];
+
     private readonly CatalogListView m_catalogListView;
     private readonly TabsController m_postTabs;
-    
-    private static readonly string DbPath = 
-        Path.Combine(Settings.GetAppFolder(), "4chan.db");
 
-    private readonly ThreadHistoryDatabase m_historyDb;
-
-    class ThreadHistoryEntry
-    {
-        public long Id { get; set; }
-        public int ThreadId { get; set; }
-        public string Board { get; set; }
-        public string? Title { get; set; }
-        public DateTime VisitedAt { get; set; }
-    }
-
-    class ThreadHistoryDatabase
-    {
-        private readonly string m_connectionString;
-
-        public ThreadHistoryDatabase(string dbPath)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-            m_connectionString = $"Data Source={dbPath}";
-        }
-
-        public void Initialize()
-        {
-            using var conn = new SqliteConnection(m_connectionString);
-            conn.Open();
-
-            var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                """
-                CREATE TABLE IF NOT EXISTS thread_history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    thread_id INTEGER NOT NULL,
-                    board TEXT NOT NULL,
-                    title TEXT,
-                    visited_at TEXT NOT NULL,
-                    UNIQUE(thread_id, board)
-                ); 
-                """;
-
-            cmd.ExecuteNonQuery();
-        }
-
-        public void SaveVisit(int threadId, string board, string? title)
-        {
-            using var conn = new SqliteConnection(m_connectionString);
-            conn.Open();
-
-            var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                """
-                INSERT INTO thread_history (thread_id, board, title, visited_at)
-                VALUES ($id, $board, $title, $ts)
-                ON CONFLICT(thread_id, board) DO UPDATE SET
-                    title = $title,
-                    visited_at = $ts;
-                """;
-            cmd.Parameters.AddWithValue("$id", threadId);
-            cmd.Parameters.AddWithValue("board", board);
-            cmd.Parameters.AddWithValue("$title", title ?? "");
-            cmd.Parameters.AddWithValue("$ts", DateTime.UtcNow.ToString("o"));
-            
-            cmd.ExecuteNonQuery();
-        }
-
-        public List<ThreadHistoryEntry> LoadHistory()
-        {
-            var results = new List<ThreadHistoryEntry>();
-            using var conn = new SqliteConnection(m_connectionString);
-            conn.Open();
-            
-            var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                """
-                SELECT id, thread_id, board, title, visited_at
-                FROM thread_history
-                ORDER BY visited_at DESC;
-                """;
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                results.Add(new ThreadHistoryEntry
-                {
-                    Id = reader.GetInt64(0),
-                    ThreadId = reader.GetInt32(1),
-                    Board = reader.GetString(2),
-                    Title = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    VisitedAt = DateTime.Parse(reader.GetString(4))
-                });
-            }
-
-            return results;
-        }
-    }
-    
     public MainWindow()
     {
-        m_historyDb = new ThreadHistoryDatabase(DbPath);
-        m_historyDb.Initialize();
-        
         Layout = new VBoxLayout();
 
         void OpenSettings()
@@ -152,6 +50,7 @@ public class MainWindow : NormalWindow
 
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
+
             void AddMenu(string title, MenuAction[] items)
             {
                 var menu = MenuBar.AddMenu(title);
@@ -160,15 +59,14 @@ public class MainWindow : NormalWindow
                     menu.AddAction(item);
                 }
             }
+
             AddMenu("File", [
                 new(MaterialIcons.Settings, "Preferences", OpenSettings),
                 new("")
                 {
                     IsSeparator = true,
                 },
-                new(MaterialIcons.DoorFront, "Exit", () => {
-                    this.Dispose();
-                }),
+                new(MaterialIcons.DoorFront, "Exit", () => { this.Dispose(); }),
             ]);
             AddMenu("Actions", [
                 new(MaterialIcons.Refresh, "Refresh All", Refresh),
@@ -178,24 +76,20 @@ public class MainWindow : NormalWindow
                 new(MaterialIcons.Terminal, "Toggle System Console"),
             ]);
             AddMenu("Help", [
-                new(MaterialIcons.Public, "Website", () => {
-                    Application.OpenURL("https://polychan.net");
-                }),
-                new(MaterialIcons.ImportContacts, "Wiki", () => {
-                    Application.OpenURL("https://github.com/Starpelly/Polychan/wiki");
-                }),
+                new(MaterialIcons.Public, "Website", () => { Application.OpenURL("https://polychan.net"); }),
+                new(MaterialIcons.ImportContacts, "Wiki",
+                    () => { Application.OpenURL("https://github.com/Starpelly/Polychan/wiki"); }),
                 new("")
                 {
                     IsSeparator = true,
                 },
-                new(MaterialIcons.Code, "Source Code", () => {
-                    Application.OpenURL("https://github.com/Starpelly/Polychan");
-                }),
+                new(MaterialIcons.Code, "Source Code",
+                    () => { Application.OpenURL("https://github.com/Starpelly/Polychan"); }),
 
                 new(MaterialIcons.Info, "About Polychan", ShowAbout)
             ]);
         }
-        
+
         // Setup ToolBar
         {
             ToolBar = new ToolBar(this)
@@ -225,10 +119,11 @@ public class MainWindow : NormalWindow
         {
             CentralWidget!.Layout = new HBoxLayout
             {
-                Padding = new(16)
+                // Padding = new(16)
             };
 
             Widget mainHolder = CentralWidget;
+            /*
             mainHolder = new ShapedFrame(CentralWidget)
             {
                 Fitting = FitPolicy.ExpandingPolicy,
@@ -236,6 +131,7 @@ public class MainWindow : NormalWindow
                 {
                 }
             };
+            */
 
             // Boards list
             /*
@@ -283,7 +179,7 @@ public class MainWindow : NormalWindow
                 }
             }
             */
-            
+
             // SideBar
             {
                 new SideBar(this, mainHolder)
@@ -301,10 +197,10 @@ public class MainWindow : NormalWindow
                     Fitting = FitPolicy.ExpandingPolicy,
                     Layout = new HBoxLayout()
                 };
-                
+
                 // Threads list
                 m_catalogListView = new CatalogListView(boardPage);
-            
+
                 CreateSeparator(boardPage);
 
                 m_postTabs = new TabsController(boardPage)
@@ -312,26 +208,13 @@ public class MainWindow : NormalWindow
                     Fitting = FitPolicy.ExpandingPolicy
                 };
             }
-            
+
             // HISTORY PAGE
             {
-                var historyPage = m_pages[SideBarOptions.History] = new NullWidget(mainHolder)
+                var historyPage = m_pages[SideBarOptions.History] = new HistoryPage(mainHolder)
                 {
                     Fitting = FitPolicy.ExpandingPolicy,
                     Visible = false,
-                    // Layout = new HBoxLayout()
-                    Layout = new VBoxLayout()
-                };
-
-                var toolbar = new ToolBar(historyPage)
-                {
-                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
-                };
-                toolbar.AddAction(new MenuAction(MaterialIcons.Refresh, "Refresh", null));
-                toolbar.AddAction(new MenuAction(MaterialIcons.Delete, "Clear History", null));
-                new HLine(historyPage)
-                {
-                    Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
                 };
             }
 
@@ -343,10 +226,10 @@ public class MainWindow : NormalWindow
                 };
             }
         }
-        
+
         switchPage(SideBarOptions.Boards);
     }
-    
+
     public static Label TabInfoWidgetThing(Widget parent)
     {
         // @TODO
@@ -384,12 +267,13 @@ public class MainWindow : NormalWindow
 
     public void LoadThreadPosts(string threadId)
     {
-        m_historyDb.SaveVisit(int.Parse(threadId), ChanApp.Client.CurrentBoard,ChanApp.Client.CurrentThread.Posts[0].Sub);
-        
+        ChanApp.HistoryDb.SaveVisit(int.Parse(threadId), ChanApp.Client.CurrentBoard,
+            ChanApp.Client.CurrentThread.Posts[0].Sub);
+
         var view = new PostsView(threadId, m_postTabs);
         m_postTabs.AddTab(view, threadId);
     }
-    
+
     public void LoadPage_Board()
     {
         switchPage(SideBarOptions.Boards);
@@ -398,15 +282,8 @@ public class MainWindow : NormalWindow
     public void LoadPage_History()
     {
         switchPage(SideBarOptions.History);
-        
-        var history = m_historyDb.LoadHistory();
-        foreach (var thread in history)
-        {
-            new Label(m_pages[SideBarOptions.History])
-            {
-                Text = thread.Title ?? "NO TITLE",
-            };
-        }
+
+        var historyPage = m_pages[SideBarOptions.History];
     }
 
     private void switchPage(SideBarOptions option)

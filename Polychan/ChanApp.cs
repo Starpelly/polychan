@@ -1,5 +1,6 @@
 ﻿using Polychan.GUI;
 using Polychan.Resources;
+using Polychan.App.Database;
 
 namespace Polychan.App;
 
@@ -9,6 +10,11 @@ public static class ChanApp
 
     public static MainWindow MainWindow { get; private set; } = null!;
     public static FourChanClient Client { get; private set; } = null!;
+
+    private static readonly string DbPath =
+        Path.Combine(GetAppFolder(), "4chan.db");
+
+    public static readonly ThreadHistoryDatabase HistoryDb = new(Path.Combine(GetAppFolder(), DbPath));
 
     private static void init()
     {
@@ -31,7 +37,8 @@ public static class ChanApp
         MainWindow.Resize(1600, 900);
 
         // Main Window Icon
-        using var iconStream = PolychanResources.ResourceAssembly.GetManifestResourceStream("Polychan.Resources.Images.4channy.ico");
+        using var iconStream =
+            PolychanResources.ResourceAssembly.GetManifestResourceStream("Polychan.Resources.Images.4channy.ico");
         MainWindow.SetIconFromStream(iconStream!);
 
         LoadCatalog("g");
@@ -59,5 +66,13 @@ public static class ChanApp
 
         MainWindow.LoadThreadPosts(threadID);
         MainWindow.Title = $"Polychan - /{Client.CurrentBoard}/{threadID}/ - {Client.CurrentThread.Posts[0].Sub}";
+    }
+
+    public static string GetAppFolder()
+    {
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var appFolder = Path.Combine(localAppData, "Polychan");
+
+        return appFolder;
     }
 }

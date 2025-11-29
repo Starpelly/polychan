@@ -12,17 +12,9 @@ public class Settings
 
     public CookieData Cookies = new();
 
-    public static string GetAppFolder()
-    {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var appFolder = Path.Combine(localAppData, "Polychan");
-
-        return appFolder;
-    }
-
     public static Settings Load()
     {
-        var appFolder = GetAppFolder();
+        var appFolder = ChanApp.GetAppFolder();
         var jsonFilePath = Path.Combine(appFolder, "settings.json");
 
         if (!Directory.Exists(appFolder))

@@ -24,14 +24,14 @@ public class SettingsDialog : DialogWindow
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
             {
-                FileName = Settings.GetAppFolder(),
+                FileName = ChanApp.GetAppFolder(),
                 UseShellExecute = true,
                 Verb = "open"
             });
         }));
         file.AddAction(new(MaterialIcons.ContentCopy, "Copy Settings & Data Path to Clipboard", () =>
         {
-            Application.Clipboard.SetText(Settings.GetAppFolder().Replace("\\", "/"));
+            Application.Clipboard.SetText(ChanApp.GetAppFolder().Replace("\\", "/"));
         }));
         var window = menubar.AddMenu("Window");
         window.AddAction(new(MaterialIcons.Close, "Close", delegate(){
