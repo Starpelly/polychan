@@ -1,8 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using FChan.Models;
+using Newtonsoft.Json;
 
 namespace Polychan.App;
 
-public class Settings
+public class Settings : Model
 {
     public class CookieData
     {

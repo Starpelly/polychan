@@ -265,13 +265,13 @@ public class MainWindow : NormalWindow
         m_catalogListView.T();
     }
 
-    public void LoadThreadPosts(FChan.Models.Thread thread, FChan.Models.PostId threadId)
+    public void LoadThreadPosts(FChan.Models.Thread thread, FChan.Models.CatalogThread catalogThread, FChan.Models.PostId threadId)
     {
         var view = new PostsView(threadId, m_postTabs);
         m_postTabs.AddTab(view, $"{threadId}");
 
         ChanApp.HistoryDb.SaveVisit(threadId, ChanApp.Client.CurrentBoard,
-            thread.OriginalJson, m_catalogListView.Threads[threadId].PreviewImage.Bitmap.EncodedData.ToArray());
+            catalogThread.OriginalJson, m_catalogListView.Threads[threadId].PreviewImage.Bitmap.EncodedData.ToArray());
     }
 
     public void LoadPage_Board()
@@ -283,7 +283,8 @@ public class MainWindow : NormalWindow
     {
         switchPage(SideBarOptions.History);
 
-        var historyPage = m_pages[SideBarOptions.History];
+        var historyPage = (HistoryPage)m_pages[SideBarOptions.History];
+        // historyPage.OnVisible();
     }
 
     private void switchPage(SideBarOptions option)

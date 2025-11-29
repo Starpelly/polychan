@@ -44,7 +44,7 @@ public partial class Widget : IDisposable
     private int m_width = 0;
     private int m_height = 0;
 
-    public bool DisableResizeEvents = false;
+    internal bool DisableResizeEvents = false;
 
     /// <summary>
     /// X position of the widget relative to its parent, in pixels.
@@ -342,6 +342,8 @@ public partial class Widget : IDisposable
     /// Difference between this and <see cref="Visible"/> is this also checks if this is just a normal widget.
     /// </summary>
     internal bool VisibleWidget => (m_windowType == WindowType.Widget) && ShouldDrawFast;
+
+    internal bool test => true;
 
     private readonly WindowType m_windowType = WindowType.Widget;
 
@@ -753,15 +755,6 @@ public partial class Widget : IDisposable
 
             OnPreLayout();
 
-            if (Name == "PostWidgetContainer")
-            {
-                var a = 0;
-            }
-            if (Name == "Posts Lists Holder")
-            {
-                var a = 0;
-            }
-
             Layout.Start();
             switch (type)
             {
@@ -780,13 +773,30 @@ public partial class Widget : IDisposable
             }
             Layout.End();
 
+            // @TODO @SPEED - might be unnecessary because the passes call Resize() which calls this anyway?
             if (Width != oldSize.Width || Height != oldSize.Height)
                 dispatchResize();
 
             OnPostLayout();
             OnPostLayoutUpdate?.Invoke();
 
+            // @HACK, @TODO - as it turns out, OnPostLayout() doesn't get sent to every widget underneath a layout, only widgets that HAVE layouts. I'll need to rethink how this works tomorrow. But this is a temporary band-aid fix!
+            foreach (var child in m_children)
+            {
+                if (child.Layout == null)
+                {
+                    child.PerformLayoutUpdate(type);
+                }
+            }
+
             TriggerRepaint();
+        }
+        else
+        {
+            // @HACK, @TODO - as it turns out, OnPostLayout() doesn't get sent to every widget underneath a layout, only widgets that HAVE layouts. I'll need to rethink how this works tomorrow. But this is a temporary band-aid fix!
+
+            OnPostLayout();
+            OnPostLayoutUpdate?.Invoke();
         }
     }
 

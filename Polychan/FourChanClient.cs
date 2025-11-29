@@ -22,6 +22,11 @@ public class FourChanClient
 
     public FourChanClient()
     {
+        JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+        {
+            Converters = { new FChan.Models.ModelConverter() }
+        };
+        
         m_httpsClientHandler = new HttpClientHandler
         {
             CookieContainer = new CookieContainer()
@@ -103,7 +108,6 @@ public class FourChanClient
         var json = await m_httpClient.GetStringAsync(url);
 
         var result = JsonConvert.DeserializeObject<FChan.Models.Thread>(json);
-        result.OriginalJson = json;
         return result;
     }
 

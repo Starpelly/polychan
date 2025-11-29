@@ -2,12 +2,6 @@
 
 namespace FChan.Models;
 
-public class Model
-{
-    [JsonIgnore]
-    public string OriginalJson = string.Empty;
-}
-
 /// <summary>
 /// A full thread, consisting of the OP and all replies.
 /// </summary>

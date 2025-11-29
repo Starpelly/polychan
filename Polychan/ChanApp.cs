@@ -62,12 +62,12 @@ public static class ChanApp
         MainWindow.Title = $"Polychan - /{board}/";
     }
 
-    public static void LoadThread(FChan.Models.PostId threadId)
+    public static void LoadThread(FChan.Models.CatalogThread thread)
     {
-        Client.CurrentThread = Client.GetThreadPostsAsync(threadId).GetAwaiter().GetResult();
+        Client.CurrentThread = Client.GetThreadPostsAsync(thread.No).GetAwaiter().GetResult();
 
-        MainWindow.LoadThreadPosts(Client.CurrentThread, threadId);
-        MainWindow.Title = $"Polychan - /{Client.CurrentBoard}/{threadId}/ - {Client.CurrentThread.Posts[0].Sub}";
+        MainWindow.LoadThreadPosts(Client.CurrentThread, thread, thread.No);
+        MainWindow.Title = $"Polychan - /{Client.CurrentBoard}/{thread.No}/ - {Client.CurrentThread.Posts[0].Sub}";
     }
 
     public static string GetAppFolder()

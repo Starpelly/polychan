@@ -7,8 +7,7 @@ internal static class LayoutQueue
 {
     // private static readonly HashSet<DirtyWidget> s_dirtyWidgets = [];
 
-
-    // @NOTE
+    // @NOTE, @TODO
     // I used to use ConcurrentDictionary, but that was causing problems because sorting wasn't guaranteed anymore.
     // Maybe I should just make it so you can't update widgets in other threads...
     // And I'll throw an exception or whatever.

@@ -3,7 +3,6 @@ using Polychan.GUI.Input;
 using Polychan.GUI.Widgets;
 using SkiaSharp;
 using System.Net;
-using FChan.Models;
 
 namespace Polychan.App.Widgets;
 
@@ -12,7 +11,7 @@ public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMou
     private const int MAX_IMAGE_WIDTH = 75;
     private static readonly Padding Padding = new(8);
 
-    private readonly CatalogThread m_thread;
+    private readonly FChan.Models.CatalogThread m_thread;
 
     private readonly Image m_previewImage;
     private readonly Label? m_subjectLabel;
@@ -21,9 +20,9 @@ public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMou
     private bool m_hovering = false;
     
     public Image PreviewImage => m_previewImage;
-    public CatalogThread ApiThread => m_thread;
+    public FChan.Models.CatalogThread ApiThread => m_thread;
 
-    public ThreadTicketWidget(CatalogThread thread, Widget? parent = null) : base(parent)
+    public ThreadTicketWidget(FChan.Models.CatalogThread thread, Widget? parent = null) : base(parent)
     {
         m_thread = thread;
         Name = "A thread widget!";
@@ -66,6 +65,8 @@ public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMou
             CatchCursorEvents = false,
             ShouldCache = false
         };
+        
+        // updateLayout();
     }
 
     public void SetBitmapPreview(SKImage image)
@@ -202,7 +203,7 @@ public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMou
     {
         if (evt.button == MouseButton.Left)
         {
-            ChanApp.LoadThread(m_thread.No);
+            ChanApp.LoadThread(m_thread);
         }
 
         return true;

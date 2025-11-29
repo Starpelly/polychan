@@ -5,7 +5,7 @@ namespace FChan.Models;
 /// <summary>
 /// Represents a page in the 4chan board catalog.
 /// </summary>
-public class CatalogPage
+public class CatalogPage : Model
 {
     /// <summary>
     /// Page number in the catalog.
@@ -23,7 +23,7 @@ public class CatalogPage
 /// <summary>
 /// Represents a thread or a post in the catalog.
 /// </summary>
-public class CatalogThread
+public class CatalogThread : Model
 {
     /// <summary>The numeric post ID.</summary>
     [JsonProperty("no")]
