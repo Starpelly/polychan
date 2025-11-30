@@ -1,238 +1,177 @@
-﻿using HtmlAgilityPack;
-using MaterialDesign;
+﻿using System.Diagnostics;
 using Polychan.GUI;
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
-using Polychan.App.Utils;
 using SkiaSharp;
-using System.Net;
 
 namespace Polychan.App.Widgets;
 
-public class PostWidget : Widget, IPaintHandler, IMouseClickHandler
+public class PostWidget : Widget, IPaintHandler
 {
-    private readonly PostThumbnail m_previewBitmap;
-    private readonly Label m_nameLabel;
-    private readonly Label m_dateLabel;
-    private readonly Label? m_previewInfoLabel;
-    private readonly Label m_postIdLabel;
-    private readonly Label m_commentLabel;
-    private readonly Label m_repliesLabel;
+    private static readonly Padding Padding = new(8);
+
+    private bool m_loadedReplies;
+    private bool m_showingReplies;
+
+    private int m_treeIndex = 0;
+
+    private readonly PostsView m_view;
+    private readonly PostWidgetContent m_content;
+
+    private NullWidget? m_repliesHolder;
+    private PushButton? m_showRepliesButton;
 
     private readonly string m_board;
     private readonly FChan.Models.ThreadPosts m_thread;
 
-    public FChan.Models.Post ApiPost { get; }
-    public readonly List<string> ReferencedPosts = [];
-
-    public PostWidget(string board, FChan.Models.ThreadPosts thread, FChan.Models.Post post, Widget? parent = null) : base(parent)
+    public FChan.Models.Post ApiPost => m_content.ApiPost;
+    public List<string> ReferencedPosts => m_content.ReferencedPosts;
+    public PostWidgetContent Content => m_content; // @TEMP
+    
+    public PostWidget(PostsView view, string board, FChan.Models.ThreadPosts thread, FChan.Models.Post post, Widget? parent = null) : base(parent)
     {
-        Name = "A Post widget!!!";
-        ShouldCache = true;
-
-        ApiPost = post;
+        m_view = view;
         m_board = board;
         m_thread = thread;
         
-        // UI Layout
-        m_nameLabel = new Label(this)
+        Name = "PostWidgetContainer";
+
+        this.Layout = new VBoxLayout
         {
-            X = 0,
-            Y = 0,
-            Text = $"<span class=\"name\">{post.Name}</span>",
-            CatchCursorEvents = false,
+            Padding = new Padding(8),
+            Spacing = 8
         };
+        this.AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
 
-        m_dateLabel = new Label(this)
+        m_content = new PostWidgetContent(board, thread, post, this)
         {
-            X = 0,
-            Y = 0,
-            Text = $"<span class=\"date\">{post.Now}</span>",
-            CatchCursorEvents = false,
+            Width = this.Width,
+            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
         };
-
-        m_postIdLabel = new Label(this)
-        {
-            X = 0,
-            Y = 0,
-            Text = $"<span class=\"postID\">#{post.No}</span>",
-            CatchCursorEvents = false,
-        };
-
-        m_repliesLabel = new Label(this);
-
-        if (post.Tim != null)
-        {
-            m_previewInfoLabel = new Label(this)
-            {
-                X = 0,
-                Y = 0,
-            };
-        }
-
-        var rawComment = post.Com;
-        var htmlEncoded = rawComment;
-        var decoded = WebUtility.HtmlDecode(htmlEncoded);
-        var commentInput = decoded;
-
-        // sanitize html
-        {
-            var doc = new HtmlDocument();
-            doc.LoadHtml(decoded);
-
-            foreach (var node in doc.DocumentNode.ChildNodes)
-            {
-                switch (node.Name)
-                {
-                    case "a":
-                        switch (node.GetAttributeValue("class", ""))
-                        {
-                            case "quotelink":
-                                ReferencedPosts.Add(node.InnerHtml.TrimStart('>'));
-                                if (node.InnerText == $">>{m_thread.No}")
-                                {
-                                    node.InnerHtml = $"{node.InnerHtml} (OP)";
-                                }
-                                break;
-                        }
-                        break;
-                }
-            }
-
-            commentInput = doc.DocumentNode.OuterHtml;
-            // Console.WriteLine(commentInput);
-        }
-
-        var commentY = m_nameLabel.Y + m_nameLabel.Height + 4;
-
-        var thumbnailUrl = $"https://{FChan.Domains.UserContent}/{board}/{post.Tim}{post.Ext}";
-        var thumbnailExt = ApiPost.Ext;
-        m_previewBitmap = new PostThumbnail(thumbnailUrl, thumbnailExt, this)
-        {
-            X = 0,
-            Y = commentY,
-        };
-
-        m_commentLabel = new Label(this)
-        {
-            Y = commentY,
-
-            Text = commentInput,
-            WordWrap = true,
-
-            Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Fixed),
-            CatchCursorEvents = false,
-        };
-
-        SetHeight();
     }
 
-    public void SetBitmapPreview(SKImage thumbnail)
+    public void SetReplies(List<PostWidget> replies)
     {
-        m_previewBitmap.SetThumbnail(thumbnail);
-        // Bytes and size info label
-        var previewInfo = $"{ApiPost.Filename}{ApiPost.Ext} ({((long)ApiPost.Fsize!).FormatBytes()}, {thumbnail.Width}x{thumbnail.Height})";
-        m_previewInfoLabel!.Text = $"<span class=\"date\">{previewInfo}</span>";
+        if (replies.Count == 0) return;
 
-        SetHeight();
+        /*
+        var repliesString = new StringBuilder();
+
+        foreach (var widget in replies)
+        {
+            repliesString.Append($">{widget.m_postWidget.APIPost.No} ");
+        }
+        m_postWidget.SetReplies(repliesString.ToString());
+        */
+
+        string ViewRepliesStr()
+        {
+            return $"View replies ({replies.Count})";
+        }
+
+        string HideRepliesStr()
+        {
+            return "Hide replies";
+        }
+
+        m_showRepliesButton = new PushButton(ViewRepliesStr(), this)
+        {
+            X = Padding.Left,
+            OnClicked = () =>
+            {
+                if (!m_showingReplies)
+                {
+                    m_showRepliesButton!.Text = HideRepliesStr();
+
+                    if (!m_loadedReplies)
+                        loadReplies(replies);
+                    showReplies();
+                }
+                else
+                {
+                    m_showRepliesButton!.Text = ViewRepliesStr();
+                    hideReplies();
+                }
+            }
+        };
+    }
+
+    private void loadReplies(List<PostWidget> replies)
+    {
+        m_loadedReplies = true;
+
+        m_repliesHolder = new NullWidget(this)
+        {
+            Width = this.Width,
+            
+            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+            AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
+
+            Layout = new VBoxLayout
+            {
+                // Padding = new(32, 0, -8, 0),
+                Padding = new(16, 0, 0, 0),
+                Spacing = 4,
+            },
+        };
+
+        var pw = new Dictionary<FChan.Models.PostId, PostWidget>(replies.Count);
+        foreach (var item in replies)
+        {
+            var widget = new PostWidget(m_view, m_board, m_thread, item.m_content.ApiPost, m_repliesHolder)
+            {
+                Width = this.Width,
+                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                m_treeIndex = this.m_treeIndex + 1 // Alternating row colors for replies? Looks pretty cool ig
+            };
+            pw.Add(item.m_content.ApiPost.No, widget);
+        }
+        m_view.LoadPostPreviews(m_board, pw);
+    }
+
+    /// <summary>
+    /// Make the replies visible, assuming they're loaded.
+    /// </summary>
+    private void showReplies()
+    {
+        Debug.Assert(m_repliesHolder != null);
+        
+        m_repliesHolder.Visible = true;
+        m_showingReplies = true;
+    }
+
+    /// <summary>
+    /// Make the replies invisible, assuming they're loaded.
+    /// </summary>
+    private void hideReplies()
+    {
+        Debug.Assert(m_repliesHolder != null);
+        
+        m_repliesHolder.Visible = false;
+        m_showingReplies = false;
     }
 
     #region Widget events
 
+    public override void OnPostLayout()
+    {
+        m_content.OnResize();
+    }
+
     public void OnPaint(SKCanvas canvas)
     {
-    }
+        using var paint = new SKPaint();
+        paint.Color = m_treeIndex % 2 == 0 ? Palette.Get(ColorRole.Base) : Palette.Get(ColorRole.AlternateBase);
 
-    public bool OnMouseClick(MouseEvent evt)
-    {
-        if (evt.button == GUI.Input.MouseButton.Right)
-        {
-            var threadUrl = $"https://boards.4chan.org/{m_board}/thread/{m_thread.No}";
-            var postUrl = $"{threadUrl}#p{ApiPost.No}";
+        // canvas.DrawRect(0, 0, Width, Height, paint);
+        canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), m_treeIndex == 0 ? 0 : 0), paint);
 
-            MenuPopup a = new(this);
-            var m = new Menu(this);
+        if (m_treeIndex == 0)
+            return;
 
-            m.AddAction(MaterialIcons.Link, "Copy Post URL to Clipboard", () =>
-            {
-                Application.Clipboard.SetText(postUrl);
-            });
-            m.AddAction(MaterialIcons.Public, "Open Post in Browser", () =>
-            {
-                Application.OpenURL(postUrl);
-            });
-            m.AddAction(MaterialIcons.Feed, "Open Thread in Browser", () =>
-            {
-                Application.OpenURL(threadUrl);
-            });
-
-            m.AddSeparator();
-            m.AddAction(MaterialIcons.Reply, "Reply", null);
-
-            a.SetMenu(m);
-            a.SetPosition(evt.globalX, evt.globalY);
-
-            Console.WriteLine(evt.globalY);
-
-            a.Show();
-        }
-
-
-        return true;
-    }
-
-    #endregion
-
-    internal void SetReplies(string replies)
-    {
-        m_repliesLabel.Text = replies;
-    }
-
-    #region Private methods
-
-    internal void OnResize()
-    {
-        // Fit thumbnail
-        var spaceForText = 200;
-        m_previewBitmap.FitToMaxWidth(this.Width - spaceForText);
-
-        SetPositions();
-        SetHeight();
-    }
-
-    internal void SetPositions()
-    {
-        m_commentLabel.X = (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Width + 8) : 0);
-
-        // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
-        m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
-        // m_postIDLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
-        m_postIdLabel.X = this.Width - m_postIdLabel.Width;
-
-        if (m_previewInfoLabel != null)
-        {
-            m_previewInfoLabel.Y = (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Y + m_previewBitmap.Height + 8) : 0);
-        }
-
-        m_repliesLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
-    }
-
-    private void SetHeight()
-    {
-        m_commentLabel.Width = this.Width - m_commentLabel.X;
-        m_commentLabel.Height = m_commentLabel.MeasureHeightFromWidth(m_commentLabel.Width);
-
-        int newHeight = 0;
-        if (m_commentLabel.Height > m_previewBitmap.Height)
-        {
-            newHeight += m_commentLabel.Height + 4;
-        }
-        else
-        {
-            newHeight = m_previewBitmap.Height + 4;
-        }
-
-        this.Height = newHeight + m_nameLabel.Height + ((m_previewInfoLabel?.Height + 8) ?? 0);
+        paint.IsStroke = true;
+        paint.Color = Palette.Get(ColorRole.Base).Darker(1.4f);
+        canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width - 1, Height - 1), m_treeIndex == 0 ? 0 : 0), paint);
     }
 
     #endregion

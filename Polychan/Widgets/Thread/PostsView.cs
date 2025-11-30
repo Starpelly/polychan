@@ -6,7 +6,7 @@ namespace Polychan.App;
 
 public class PostsView : Widget
 {
-    private readonly Dictionary<FChan.Models.PostId, PostWidgetContainer> m_postWidgets = [];
+    private readonly Dictionary<FChan.Models.PostId, PostWidget> m_postWidgets = [];
     
     private readonly ScrollArea? m_postsListWidget;
     private readonly Label m_threadTitleLabel;
@@ -43,7 +43,7 @@ public class PostsView : Widget
         
         foreach (var post in threadPosts.Posts)
         {
-            var widget = new PostWidgetContainer(this, board, threadPosts, post, m_postsListWidget.ChildWidget)
+            var widget = new PostWidget(this, board, threadPosts, post, m_postsListWidget.ChildWidget)
             {
                 Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
@@ -53,9 +53,9 @@ public class PostsView : Widget
         LoadPostPreviews(board, m_postWidgets);
     }
     
-    public void LoadPostPreviews(string board, Dictionary<FChan.Models.PostId, PostWidgetContainer> widgetsToUpdate)
+    public void LoadPostPreviews(string board, Dictionary<FChan.Models.PostId, PostWidget> widgetsToUpdate)
     {
-        var refPosts = new Dictionary<FChan.Models.PostId, List<PostWidgetContainer>>();
+        var refPosts = new Dictionary<FChan.Models.PostId, List<PostWidget>>();
 
         foreach (var key in widgetsToUpdate.Keys)
         {
@@ -96,7 +96,7 @@ public class PostsView : Widget
         {
             if (image != null)
             {
-                widgetsToUpdate[postId].Widget.SetBitmapPreview(image);
+                widgetsToUpdate[postId].Content.SetBitmapPreview(image);
             }
         });
     }

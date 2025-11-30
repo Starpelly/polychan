@@ -23,7 +23,7 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
     
     private GifPlayer? m_gifPlayer;
 
-    public PostThumbnail(string fullSizedUrl, string ext, PostWidget parent) : base(parent)
+    public PostThumbnail(string fullSizedUrl, string ext, PostWidgetContent parent) : base(parent)
     {
         m_fullUrl = fullSizedUrl;
         m_ext = ext;
@@ -129,7 +129,7 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
 
         FitToMaxWidth(m_fullImage?.Width ?? MAX_IMAGE_WIDTH);
 
-        (Parent as PostWidget)?.OnResize();
+        (Parent as PostWidgetContent)?.OnResize();
     }
 
     private void loadFull()
