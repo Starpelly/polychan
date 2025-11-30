@@ -21,6 +21,8 @@ public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMou
     
     public Image PreviewImage => m_previewImage;
     public FChan.Models.CatalogThread ApiThread => m_thread;
+    
+    public Action? OnItemClick { get; set; }
 
     public ThreadTicketWidget(FChan.Models.CatalogThread thread, Widget? parent = null) : base(parent)
     {
@@ -203,7 +205,7 @@ public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMou
     {
         if (evt.button == MouseButton.Left)
         {
-            ChanApp.LoadThread(m_thread);
+            OnItemClick?.Invoke();
         }
 
         return true;

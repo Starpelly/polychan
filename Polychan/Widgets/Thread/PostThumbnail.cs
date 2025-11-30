@@ -11,8 +11,6 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
 {
     private const int MAX_IMAGE_WIDTH = 1280;
 
-    private readonly Post m_apiPost;
-
     private SKImage? m_thumbnailImage;
     private SKImage? m_fullImage;
 
@@ -20,12 +18,15 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
     private bool m_loadedFull = false;
     private bool m_triedLoadingFull = false;
 
+    private readonly string m_fullUrl;
+    private readonly string m_ext;
+    
     private GifPlayer? m_gifPlayer;
 
-    public PostThumbnail(Post post, Widget? parent = null) : base(parent)
+    public PostThumbnail(string fullSizedUrl, string ext, PostWidget parent) : base(parent)
     {
-        m_apiPost = post;
-
+        m_fullUrl = fullSizedUrl;
+        m_ext = ext;
         updateImage(null);
     }
 
@@ -136,12 +137,11 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
         if (m_triedLoadingFull) return;
         m_triedLoadingFull = true;
 
-        if (m_apiPost.Ext == ".gif")
+        if (m_ext == ".gif")
         {
             m_gifPlayer = new();
 
-            var post = m_apiPost;
-            var url = $"https://{Domains.UserContent}/{ChanApp.Client.CurrentBoard}/{post.Tim}{post.Ext}";
+            var url = m_fullUrl;
 
             Console.WriteLine(url);
             _ = m_gifPlayer.LoadAsync(url, () =>
@@ -161,7 +161,8 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
         }
         else
         {
-            _ = ChanApp.Client.DownloadAttachmentFromPostURLAsync(m_apiPost, (thumbnail) =>
+            
+            _ = ChanApp.Client.DownloadAttachmentFromURLAsync(m_fullUrl, (thumbnail) =>
             {
                 if (thumbnail != null)
                 {

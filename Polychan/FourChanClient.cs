@@ -14,12 +14,6 @@ public class FourChanClient
     private readonly HttpClient m_httpClient;
     private readonly SemaphoreSlim m_throttler = new(8); // 8 concurrent downloads
 
-    public string CurrentBoard { get; set; } = string.Empty;
-    public FChan.Models.Thread CurrentThread { get; set; }
-
-    public FChan.Responses.BoardsResponse Boards;
-    public FChan.Responses.CatalogResponse Catalog;
-
     public FourChanClient()
     {
         JsonConvert.DefaultSettings = () => new JsonSerializerSettings
@@ -90,9 +84,9 @@ public class FourChanClient
         return result;
     }
 
-    public async Task<FChan.Responses.CatalogResponse> GetCatalogAsync()
+    public async Task<FChan.Responses.CatalogResponse> GetCatalogAsync(string board)
     {
-        var url = $"https://{FChan.Domains.Api}/{CurrentBoard}/catalog.json";
+        var url = $"https://{FChan.Domains.Api}/{board}/catalog.json";
         var json = await m_httpClient.GetStringAsync(url);
 
         var result = JsonConvert.DeserializeObject<List<FChan.Models.CatalogPage>>(json);
@@ -102,18 +96,34 @@ public class FourChanClient
         };
     }
 
-    public async Task<FChan.Models.Thread> GetThreadPostsAsync(FChan.Models.PostId threadId)
+    public async Task<FChan.Models.ThreadPosts> GetThreadPostsAsync(string board, FChan.Models.PostId threadId)
     {
-        var url = $"https://{FChan.Domains.Api}/{CurrentBoard}/thread/{threadId}.json";
+        var url = $"https://{FChan.Domains.Api}/{board}/thread/{threadId}.json";
         var json = await m_httpClient.GetStringAsync(url);
 
-        var result = JsonConvert.DeserializeObject<FChan.Models.Thread>(json);
+        var result = JsonConvert.DeserializeObject<FChan.Models.ThreadPosts>(json);
         return result;
     }
-
-    public async Task<SKImage?> DownloadThumbnailFromPostURLAsync(FChan.Models.AttachmentId tim)
+    
+    public async Task DownloadAttachmentFromURLAsync(string url, Action<SKImage?> onComplete)
     {
-        string url = $"https://{FChan.Domains.UserContent}/{CurrentBoard}/{tim}s.jpg";
+        try
+        {
+            byte[] imageBytes = await m_httpClient.GetByteArrayAsync(url);
+            using var ms = new MemoryStream(imageBytes);
+            var ret = SKImage.FromEncodedData(ms); // Decode into SKBitmap
+            onComplete.Invoke(ret);
+        }
+        catch
+        {
+            onComplete?.Invoke(null);
+            // return null; // Handle gracefully if image isn't available
+        }
+    }
+
+    public async Task<SKImage?> DownloadThumbnailFromPostURLAsync(string board, FChan.Models.AttachmentId tim)
+    {
+        var url = $"https://{FChan.Domains.UserContent}/{board}/{tim}s.jpg";
 
         try
         {
@@ -127,9 +137,9 @@ public class FourChanClient
         }
     }
 
-    public async Task DownloadAttachmentFromPostURLAsync(FChan.Models.Post post, Action<SKImage?> onComplete)
+    public async Task DownloadAttachmentFromPostAsync(string board, FChan.Models.Post post, Action<SKImage?> onComplete)
     {
-        string url = $"https://{FChan.Domains.UserContent}/{CurrentBoard}/{post.Tim}{post.Ext}";
+        var url = $"https://{FChan.Domains.UserContent}/{board}/{post.Tim}{post.Ext}";
 
         try
         {
@@ -145,7 +155,7 @@ public class FourChanClient
         }
     }
 
-    public async Task LoadThumbnailsAsync(IEnumerable<(FChan.Models.PostId thread, FChan.Models.AttachmentId? attachment)> imageIds, Action<FChan.Models.PostId, SKImage?> onComplete)
+    public async Task LoadThumbnailsAsync(string board, IEnumerable<(FChan.Models.PostId thread, FChan.Models.AttachmentId? attachment)> imageIds, Action<FChan.Models.PostId, SKImage?> onComplete)
     {
         var tasks = imageIds.Select(async tim =>
         {
@@ -154,7 +164,7 @@ public class FourChanClient
             {
                 if (tim.attachment != null)
                 {
-                    var img = await DownloadThumbnailFromPostURLAsync((FChan.Models.AttachmentId)tim.attachment);
+                    var img = await DownloadThumbnailFromPostURLAsync(board, (FChan.Models.AttachmentId)tim.attachment);
 
                     if (img != null)
                     {

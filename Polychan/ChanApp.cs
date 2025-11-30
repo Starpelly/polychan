@@ -15,6 +15,7 @@ public static class ChanApp
         Path.Combine(GetAppFolder(), "4chan.db");
 
     public static readonly ThreadHistoryDatabase HistoryDb = new(Path.Combine(GetAppFolder(), DbPath));
+    public static readonly DownloadedDatabase DownloadedDb = new(Path.Combine(GetAppFolder(), DbPath));
 
     private static void init()
     {
@@ -22,9 +23,10 @@ public static class ChanApp
         Settings = Settings.Load();
 
         Client = new FourChanClient();
-        Client.Boards = Client.GetBoardsAsync().GetAwaiter().GetResult();
+        // Client.Boards = Client.GetBoardsAsync().GetAwaiter().GetResult();
         
         HistoryDb.Initialize();
+        DownloadedDb.Initialize();
     }
 
     public static void Start()
@@ -43,7 +45,8 @@ public static class ChanApp
             PolychanResources.ResourceAssembly.GetManifestResourceStream("Polychan.Resources.Images.4channy.ico");
         MainWindow.SetIconFromStream(iconStream!);
 
-        LoadCatalog("g");
+        MainWindow.NewTab("g");
+        // LoadCatalog("g");
         // LoadThread("714085510");
         MainWindow.Show();
 
@@ -53,22 +56,21 @@ public static class ChanApp
         app.Run();
     }
 
+    /*
     public static void LoadCatalog(string board)
     {
-        Client.CurrentBoard = board;
-        Client.Catalog = Client.GetCatalogAsync().GetAwaiter().GetResult();
+        // Client.Catalog = Client.GetCatalogAsync().GetAwaiter().GetResult();
 
-        MainWindow.LoadBoardCatalog(board);
+        MainWindow.NewTab(board);
         MainWindow.Title = $"Polychan - /{board}/";
     }
 
     public static void LoadThread(FChan.Models.CatalogThread thread)
     {
-        Client.CurrentThread = Client.GetThreadPostsAsync(thread.No).GetAwaiter().GetResult();
-
-        MainWindow.LoadThreadPosts(Client.CurrentThread, thread, thread.No);
-        MainWindow.Title = $"Polychan - /{Client.CurrentBoard}/{thread.No}/ - {Client.CurrentThread.Posts[0].Sub}";
+        // MainWindow.LoadThreadPosts(Client.CurrentThread, thread, thread.No);
+        // MainWindow.Title = $"Polychan - /{Client.CurrentBoard}/{thread.No}/ - {Client.CurrentThread.Posts[0].Sub}";
     }
+    */
 
     public static string GetAppFolder()
     {

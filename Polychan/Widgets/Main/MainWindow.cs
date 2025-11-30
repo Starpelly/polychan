@@ -1,4 +1,5 @@
-﻿using MaterialDesign;
+﻿using System.Diagnostics;
+using MaterialDesign;
 using Polychan.GUI;
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
@@ -11,16 +12,59 @@ public class MainWindow : NormalWindow
 {
     public enum SideBarOptions
     {
-        Boards,
+        BoardTabs,
         Saved,
         History,
         Search
     }
 
-    private readonly Dictionary<SideBarOptions, Widget> m_pages = [];
+    class Tab : NullWidget
+    {
+        private readonly string m_board;
+        private readonly CatalogListView m_catalogListView;
+        private readonly TabsController m_postTabs;
+        
+        private FChan.Models.ThreadPosts? m_threadPosts;
 
-    private readonly CatalogListView m_catalogListView;
-    private readonly TabsController m_postTabs;
+        public Tab(string board, Widget parent) : base(parent)
+        {
+            Layout = new HBoxLayout();
+            
+            var catalogApiResponse = ChanApp.Client.GetCatalogAsync(board).GetAwaiter().GetResult();
+            
+            m_board = board;
+            m_catalogListView = new CatalogListView(catalogApiResponse, this)
+            {
+                Fitting = new FitPolicy(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
+            };
+            m_postTabs = new TabsController(this)
+            {
+                Fitting = FitPolicy.ExpandingPolicy
+            };
+            
+            m_catalogListView.LoadCatalog(board);
+            m_catalogListView.T();
+
+            m_catalogListView.OnItemClick = loadThread;
+        }
+
+        private void loadThread(ThreadTicketWidget ticket)
+        {
+            Debug.Assert(m_catalogListView.CurrentBoard != null);
+            var threadId = ticket.ApiThread.No;
+                
+            m_threadPosts = ChanApp.Client.GetThreadPostsAsync(m_board, threadId).GetAwaiter().GetResult();
+                
+            var view = new PostsView(m_board, m_threadPosts, threadId, m_postTabs);
+            m_postTabs.AddTab(view, $"{threadId}");
+
+            ChanApp.HistoryDb.SaveVisit(threadId, m_catalogListView.CurrentBoard,
+                ticket.ApiThread.OriginalJson, m_catalogListView.Threads[threadId].PreviewImage.Bitmap.EncodedData.ToArray());
+        }
+    }
+
+    private readonly Dictionary<SideBarOptions, Widget> m_pages = [];
+    private readonly List<Tab> m_tabs = [];
 
     public MainWindow()
     {
@@ -33,12 +77,15 @@ public class MainWindow : NormalWindow
 
         void Refresh()
         {
-            ChanApp.LoadCatalog(ChanApp.Client.CurrentBoard);
         }
 
         void ShowAbout()
         {
             new AboutDialog(this).Show();
+        }
+
+        void DownloadThread()
+        {
         }
 
         // Setup MenuBar
@@ -98,6 +145,7 @@ public class MainWindow : NormalWindow
             };
             ToolBar.AddAction(new MenuAction(MaterialIcons.Add, "New"));
             ToolBar.AddAction(new MenuAction(MaterialIcons.FolderOpen, "Open"));
+            ToolBar.AddAction(new MenuAction(MaterialIcons.Download, "Download", DownloadThread));
             ToolBar.AddSeparator();
             ToolBar.AddAction(new MenuAction(MaterialIcons.Refresh, "Refresh", Refresh));
             ToolBar.AddSeparator();
@@ -192,13 +240,14 @@ public class MainWindow : NormalWindow
 
             // BOARD PAGE
             {
-                var boardPage = m_pages[SideBarOptions.Boards] = new NullWidget(mainHolder)
+                var boardPage = m_pages[SideBarOptions.BoardTabs] = new NullWidget(mainHolder)
                 {
                     Fitting = FitPolicy.ExpandingPolicy,
                     Layout = new HBoxLayout()
                 };
 
                 // Threads list
+                /*
                 m_catalogListView = new CatalogListView(boardPage);
 
                 CreateSeparator(boardPage);
@@ -207,6 +256,7 @@ public class MainWindow : NormalWindow
                 {
                     Fitting = FitPolicy.ExpandingPolicy
                 };
+                */
             }
 
             // HISTORY PAGE
@@ -227,7 +277,7 @@ public class MainWindow : NormalWindow
             }
         }
 
-        switchPage(SideBarOptions.Boards);
+        switchPage(SideBarOptions.BoardTabs);
     }
 
     public static Label TabInfoWidgetThing(Widget parent)
@@ -259,24 +309,31 @@ public class MainWindow : NormalWindow
         return w;
     }
 
-    public void LoadBoardCatalog(string board)
+    public void NewTab(string board)
     {
-        m_catalogListView.LoadCatalog(board);
-        m_catalogListView.T();
+        var tabParent = m_pages[SideBarOptions.BoardTabs];
+        var tab = new Tab(board, tabParent)
+        {
+            Fitting = FitPolicy.ExpandingPolicy,
+        };
+        
+        m_tabs.Add(tab);
     }
-
-    public void LoadThreadPosts(FChan.Models.Thread thread, FChan.Models.CatalogThread catalogThread, FChan.Models.PostId threadId)
+    
+    public void LoadThreadPosts(FChan.Models.ThreadPosts threadPosts, FChan.Models.CatalogThread catalogThread, FChan.Models.PostId threadId)
     {
+        /*
         var view = new PostsView(threadId, m_postTabs);
         m_postTabs.AddTab(view, $"{threadId}");
 
         ChanApp.HistoryDb.SaveVisit(threadId, ChanApp.Client.CurrentBoard,
             catalogThread.OriginalJson, m_catalogListView.Threads[threadId].PreviewImage.Bitmap.EncodedData.ToArray());
+            */
     }
 
     public void LoadPage_Board()
     {
-        switchPage(SideBarOptions.Boards);
+        switchPage(SideBarOptions.BoardTabs);
     }
 
     public void LoadPage_History()

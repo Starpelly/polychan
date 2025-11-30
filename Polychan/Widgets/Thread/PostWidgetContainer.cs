@@ -20,24 +20,29 @@ public class PostWidgetContainer : Widget, IPaintHandler
     private NullWidget? m_repliesHolder;
     private PushButton? m_showRepliesButton;
 
+    private readonly string m_board;
+    private readonly FChan.Models.ThreadPosts m_thread;
+
     public FChan.Models.Post ApiPost => m_postWidget.ApiPost;
     public List<string> ReferencedPosts => m_postWidget.ReferencedPosts;
     public PostWidget Widget => m_postWidget; // @TEMP
     
-    public PostWidgetContainer(PostsView view, FChan.Models.Post post, Widget? parent = null) : base(parent)
+    public PostWidgetContainer(PostsView view, string board, FChan.Models.ThreadPosts thread, FChan.Models.Post post, Widget? parent = null) : base(parent)
     {
         m_view = view;
+        m_board = board;
+        m_thread = thread;
         
         Name = "PostWidgetContainer";
 
         this.Layout = new VBoxLayout
         {
-            Padding = new(8),
+            Padding = new Padding(8),
             Spacing = 8
         };
         this.AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
 
-        m_postWidget = new PostWidget(post, this)
+        m_postWidget = new PostWidget(board, thread, post, this)
         {
             Width = this.Width,
             Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
@@ -112,7 +117,7 @@ public class PostWidgetContainer : Widget, IPaintHandler
         var pw = new Dictionary<FChan.Models.PostId, PostWidgetContainer>(replies.Count);
         foreach (var item in replies)
         {
-            var widget = new PostWidgetContainer(m_view, item.m_postWidget.ApiPost, m_repliesHolder)
+            var widget = new PostWidgetContainer(m_view, m_board, m_thread, item.m_postWidget.ApiPost, m_repliesHolder)
             {
                 Width = this.Width,
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
@@ -120,7 +125,7 @@ public class PostWidgetContainer : Widget, IPaintHandler
             };
             pw.Add(item.m_postWidget.ApiPost.No, widget);
         }
-        m_view.LoadPostPreviews(pw);
+        m_view.LoadPostPreviews(m_board, pw);
     }
 
     private void showReplies()

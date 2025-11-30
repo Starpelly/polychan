@@ -5,7 +5,7 @@ namespace FChan.Models;
 /// <summary>
 /// A full thread, consisting of the OP and all replies.
 /// </summary>
-public class Thread : Model
+public class ThreadPosts : Model
 {
     [JsonIgnore]
     public PostId No => Posts[0].No;

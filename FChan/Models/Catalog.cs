@@ -182,5 +182,5 @@ public class CatalogThread : Model
 
     /// <summary>List of most recent replies to the thread.</summary>
     [JsonProperty("last_replies")]
-    public List<Thread> LastReplies { get; set; } = [];
+    public List<ThreadPosts> LastReplies { get; set; } = [];
 }

@@ -19,16 +19,21 @@ public class PostWidget : Widget, IPaintHandler, IMouseClickHandler
     private readonly Label m_commentLabel;
     private readonly Label m_repliesLabel;
 
+    private readonly string m_board;
+    private readonly FChan.Models.ThreadPosts m_thread;
+
     public FChan.Models.Post ApiPost { get; }
     public readonly List<string> ReferencedPosts = [];
 
-    public PostWidget(FChan.Models.Post post, Widget? parent = null) : base(parent)
+    public PostWidget(string board, FChan.Models.ThreadPosts thread, FChan.Models.Post post, Widget? parent = null) : base(parent)
     {
         Name = "A Post widget!!!";
         ShouldCache = true;
 
         ApiPost = post;
-
+        m_board = board;
+        m_thread = thread;
+        
         // UI Layout
         m_nameLabel = new Label(this)
         {
@@ -84,7 +89,7 @@ public class PostWidget : Widget, IPaintHandler, IMouseClickHandler
                         {
                             case "quotelink":
                                 ReferencedPosts.Add(node.InnerHtml.TrimStart('>'));
-                                if (node.InnerText == $">>{ChanApp.Client.CurrentThread.No}")
+                                if (node.InnerText == $">>{m_thread.No}")
                                 {
                                     node.InnerHtml = $"{node.InnerHtml} (OP)";
                                 }
@@ -100,7 +105,9 @@ public class PostWidget : Widget, IPaintHandler, IMouseClickHandler
 
         var commentY = m_nameLabel.Y + m_nameLabel.Height + 4;
 
-        m_previewBitmap = new(ApiPost, this)
+        var thumbnailUrl = $"https://{FChan.Domains.UserContent}/{board}/{post.Tim}{post.Ext}";
+        var thumbnailExt = ApiPost.Ext;
+        m_previewBitmap = new PostThumbnail(thumbnailUrl, thumbnailExt, this)
         {
             X = 0,
             Y = commentY,
@@ -140,7 +147,7 @@ public class PostWidget : Widget, IPaintHandler, IMouseClickHandler
     {
         if (evt.button == GUI.Input.MouseButton.Right)
         {
-            var threadUrl = $"https://boards.4chan.org/{ChanApp.Client.CurrentBoard}/thread/{ChanApp.Client.CurrentThread.No}";
+            var threadUrl = $"https://boards.4chan.org/{m_board}/thread/{m_thread.No}";
             var postUrl = $"{threadUrl}#p{ApiPost.No}";
 
             MenuPopup a = new(this);

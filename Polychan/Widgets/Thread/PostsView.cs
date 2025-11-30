@@ -11,7 +11,7 @@ public class PostsView : Widget
     private readonly ScrollArea? m_postsListWidget;
     private readonly Label m_threadTitleLabel;
     
-    public PostsView(FChan.Models.PostId threadId, Widget? parent = null) : base(parent)
+    public PostsView(string board, FChan.Models.ThreadPosts threadPosts, FChan.Models.PostId threadId, Widget? parent = null) : base(parent)
     {
         Name = "Posts View";
         CatchCursorEvents = false;
@@ -20,7 +20,7 @@ public class PostsView : Widget
         Layout = new VBoxLayout();
         
         m_threadTitleLabel = MainWindow.TabInfoWidgetThing(this);
-        m_threadTitleLabel.Text = $"<span class=\"header\">/{ChanApp.Client.CurrentBoard}/{threadId}/ - {ChanApp.Client.CurrentThread.Posts[0].Sub}</span>";
+        m_threadTitleLabel.Text = $"<span class=\"header\">/{board}/{threadId}/ - {threadPosts.Posts[0].Sub}</span>";
 
         m_postsListWidget = new ScrollArea(this)
         {
@@ -41,19 +41,19 @@ public class PostsView : Widget
             Name = "Posts Lists Holder"
         };
         
-        foreach (var post in ChanApp.Client.CurrentThread.Posts)
+        foreach (var post in threadPosts.Posts)
         {
-            var widget = new PostWidgetContainer(this, post, m_postsListWidget.ChildWidget)
+            var widget = new PostWidgetContainer(this, board, threadPosts, post, m_postsListWidget.ChildWidget)
             {
                 Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
             m_postWidgets.Add(post.No, widget);
         }
 
-        LoadPostPreviews(m_postWidgets);
+        LoadPostPreviews(board, m_postWidgets);
     }
     
-    public void LoadPostPreviews(Dictionary<FChan.Models.PostId, PostWidgetContainer> widgetsToUpdate)
+    public void LoadPostPreviews(string board, Dictionary<FChan.Models.PostId, PostWidgetContainer> widgetsToUpdate)
     {
         var refPosts = new Dictionary<FChan.Models.PostId, List<PostWidgetContainer>>();
 
@@ -92,7 +92,7 @@ public class PostsView : Widget
 
         // Load thumbnails for posts
         var tuples = widgetsToUpdate.Select(c => (c.Key, c.Value.ApiPost.Tim));
-        _ = ChanApp.Client.LoadThumbnailsAsync(tuples, (postId, image) =>
+        _ = ChanApp.Client.LoadThumbnailsAsync(board, tuples, (postId, image) =>
         {
             if (image != null)
             {
