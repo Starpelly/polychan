@@ -142,8 +142,8 @@ public class Client
                 {
                     pages[i].Threads[ii].Attachment = new Attachment()
                     {
-                        BigUrl = $"https://{Backends.FChan.Domains.UserContent}/{board.Id}/{fourthread.Tim}{fourthread.Ext}",
-                        SmallUrl = $"https://{Backends.FChan.Domains.UserContent}/{board.Id}/{fourthread.Tim}s.jpg",
+                        Url = $"https://{Backends.FChan.Domains.UserContent}/{board.Id}/{fourthread.Tim}{fourthread.Ext}",
+                        ThumbnailUrl = $"https://{Backends.FChan.Domains.UserContent}/{board.Id}/{fourthread.Tim}s.jpg",
                         FileName = fourthread.Filename,
                         FileSize = (long)fourthread.Fsize!,
                         Ext = fourthread.Ext,
@@ -184,8 +184,8 @@ public class Client
             {
                 comments[i].Attachment = new Attachment()
                 {
-                    BigUrl = $"https://{Backends.FChan.Domains.UserContent}/{thread.BoardId}/{fourComment.Tim}{fourComment.Ext}",
-                    SmallUrl = $"https://{Backends.FChan.Domains.UserContent}/{thread.BoardId}/{fourComment.Tim}s.jpg",
+                    Url = $"https://{Backends.FChan.Domains.UserContent}/{thread.BoardId}/{fourComment.Tim}{fourComment.Ext}",
+                    ThumbnailUrl = $"https://{Backends.FChan.Domains.UserContent}/{thread.BoardId}/{fourComment.Tim}s.jpg",
                     FileName = fourComment.Filename,
                     FileSize = (long)fourComment.Fsize,
                     Ext = fourComment.Ext,

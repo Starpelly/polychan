@@ -95,7 +95,7 @@ public class CommentWidgetContent : Widget, IPaintHandler, IMouseClickHandler
 
         if (comment.Attachment != null)
         {
-            var thumbnailUrl = comment.Attachment.BigUrl;
+            var thumbnailUrl = comment.Attachment.Url;
             var thumbnailExt = comment.Attachment.Ext;
             m_previewBitmap = new CommentThumbnail(thumbnailUrl, thumbnailExt, this)
             {

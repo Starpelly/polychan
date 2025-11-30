@@ -492,12 +492,12 @@ public class Attachment
     /// <summary>
     /// URL to the attachment.
     /// </summary>
-    public required string BigUrl;
+    public required string Url;
 
     /// <summary>
     /// URL to the small (preview) version of the attachment.
     /// </summary>
-    public required string SmallUrl;
+    public required string ThumbnailUrl;
 
     /// <summary>
     /// The filename of the attachment.

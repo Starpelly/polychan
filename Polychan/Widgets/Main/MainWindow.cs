@@ -20,7 +20,9 @@ public class MainWindow : NormalWindow
     class CatalogTab : NullWidget
     {
         private readonly CatalogListView m_catalogListView;
-        private readonly TabsController m_postTabs;
+
+        private ThreadView? m_threadView;
+        // private readonly TabsController m_postTabs;
         
         private Imageboard.Catalog m_catalog;
         private Imageboard.Thread? m_currentThread;
@@ -40,10 +42,12 @@ public class MainWindow : NormalWindow
                 Fitting = new FitPolicy(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
             };
             
+            /*
             m_postTabs = new TabsController(this)
             {
                 Fitting = FitPolicy.ExpandingPolicy
             };
+            */
             
             m_catalogListView.T();
 
@@ -55,9 +59,10 @@ public class MainWindow : NormalWindow
             var threadId = ticket.ApiThread.Id;
                 
             m_currentThread = ChanApp.ImageboardClient.GetFullThreadAsync(ticket.ApiThread).GetAwaiter().GetResult();
-                
-            var view = new ThreadView(m_currentThread, m_postTabs);
-            m_postTabs.AddTab(view, $"{threadId}");
+            
+            m_threadView?.Dispose();
+            m_threadView = new ThreadView(m_currentThread, this);
+            // m_postTabs.AddTab(view, $"{threadId}");
 
             /*
             ChanApp.HistoryDb.SaveVisit(threadId, m_catalogListView.CurrentBoard,

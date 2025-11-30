@@ -95,7 +95,7 @@ public class CatalogListView : Widget
         // -pelly
 
         // Load thumbnails for threads
-        var tuples = m_threadWidgets.Select(c => (c.Key, c.Value.ApiThread.Attachment?.SmallUrl));
+        var tuples = m_threadWidgets.Select(c => (c.Key, SmallUrl: c.Value.ApiThread.Attachment?.ThumbnailUrl));
         _ = Utils.HttpHelpers.LoadThumbnailsAsync(tuples, (postId, image) =>
         {
             if (image != null)

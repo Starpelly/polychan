@@ -94,7 +94,7 @@ public class ThreadView : Widget
         }
 
         // Load thumbnails for posts
-        var tuples = widgetsToUpdate.Select(c => (c.Key, c.Value.ApiPost.Attachment?.SmallUrl));
+        var tuples = widgetsToUpdate.Select(c => (c.Key, SmallUrl: c.Value.ApiPost.Attachment?.ThumbnailUrl));
         _ = Utils.HttpHelpers.LoadThumbnailsAsync(tuples, (postId, image) =>
         {
             if (image != null)

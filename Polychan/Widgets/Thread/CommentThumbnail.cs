@@ -200,6 +200,6 @@ public class CommentThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseE
         m_fullImage?.Dispose();
         m_gifPlayer?.Dispose();
 
-        Console.WriteLine("Dispose");
+        Console.WriteLine("Disposed Comment Thumbnail");
     }
 }
