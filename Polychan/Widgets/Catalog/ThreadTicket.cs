@@ -4,10 +4,11 @@ using Polychan.GUI.Input;
 using Polychan.GUI.Widgets;
 using SkiaSharp;
 using System.Net;
+using MaterialDesign;
 
 namespace Polychan.App.Widgets;
 
-public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
+public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler, IMouseClickHandler
 {
     private const int MAX_IMAGE_WIDTH = 75;
     private static readonly Padding Padding = new(8);
@@ -294,4 +295,38 @@ public class ThreadTicketWidget : Widget, IPaintHandler, IPostPaintHandler, IMou
     }
 
     #endregion
+
+    public bool OnMouseClick(MouseEvent evt)
+    {
+        if (evt.button == MouseButton.Right)
+        {
+            var threadUrl = $"https://boards.4chan.org/{ApiThread.BoardId}/thread/{ApiThread.Id}";
+
+            MenuPopup a = new(this);
+            var m = new Menu(this);
+
+            m.AddAction(MaterialIcons.Public, "Open Thread in Browser", () => { Application.OpenURL(threadUrl); });
+
+            m.AddSeparator();
+            
+            m.AddAction(MaterialIcons.Link, "Copy Thread URL to Clipboard",
+                () => { Application.Clipboard.SetText(threadUrl); });
+
+            if (ApiThread.Attachment != null)
+            {
+                m.AddSeparator();
+                m.AddAction(MaterialIcons.Link, "Copy Image Link to Clipboard",
+                    () => { Application.Clipboard.SetText(ApiThread.Attachment.Url); });
+            }
+
+            a.SetMenu(m);
+            a.SetPosition(evt.globalX, evt.globalY);
+
+            Console.WriteLine(evt.globalY);
+
+            a.Show();
+        }
+
+        return true;
+    }
 }

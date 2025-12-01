@@ -7,6 +7,7 @@ using Polychan.GUI.Widgets;
 using Polychan.App.Utils;
 using SkiaSharp;
 using System.Net;
+using Polychan.GUI.Input;
 using Polychan.Resources;
 
 namespace Polychan.App.Widgets;
@@ -84,7 +85,7 @@ public class CommentWidgetContent : Widget, IPaintHandler, IMouseClickHandler
             if (!string.IsNullOrEmpty(iconName))
             {
                 m_nameLabel.Text += ($"## {comment.AuthorRole}");
-                
+
                 using var iconStream =
                     PolychanResources.ResourceAssembly.GetManifestResourceStream(
                         $"Polychan.Resources.Images._4chan.{iconName}");
@@ -207,7 +208,7 @@ public class CommentWidgetContent : Widget, IPaintHandler, IMouseClickHandler
 
     public bool OnMouseClick(MouseEvent evt)
     {
-        if (evt.button == GUI.Input.MouseButton.Right)
+        if (evt.button == MouseButton.Right)
         {
             var threadUrl = $"https://boards.4chan.org/{ApiComment.BoardId}/thread/{ApiComment.ThreadId}";
             var postUrl = $"{threadUrl}#p{ApiComment.Id}";
@@ -226,8 +227,12 @@ public class CommentWidgetContent : Widget, IPaintHandler, IMouseClickHandler
             m.AddAction(MaterialIcons.Link, "Copy Thread URL to Clipboard",
                 () => { Application.Clipboard.SetText(threadUrl); });
 
-            m.AddSeparator();
-            m.AddAction(MaterialIcons.Reply, "Reply", null);
+            if (ApiComment.Attachment != null)
+            {
+                m.AddSeparator();
+                m.AddAction(MaterialIcons.Link, "Copy Image Link to Clipboard",
+                    () => { Application.Clipboard.SetText(ApiComment.Attachment.Url); });
+            }
 
             a.SetMenu(m);
             a.SetPosition(evt.globalX, evt.globalY);
