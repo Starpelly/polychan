@@ -11,7 +11,7 @@ public class MainWindow : NormalWindow
 {
     public enum SideBarOptions
     {
-        BoardTabs,
+        Tabs,
         Saved,
         History,
         Search
@@ -72,7 +72,7 @@ public class MainWindow : NormalWindow
     }
 
     private readonly Dictionary<SideBarOptions, Widget> m_pages = [];
-    private readonly List<CatalogTab> m_tabs = [];
+    private readonly SideBar m_sideBar;
 
     public MainWindow()
     {
@@ -238,7 +238,7 @@ public class MainWindow : NormalWindow
 
             // SideBar
             {
-                new SideBar(this, mainHolder)
+                m_sideBar = new SideBar(this, mainHolder)
                 {
                     Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                     Width = 140
@@ -248,7 +248,7 @@ public class MainWindow : NormalWindow
 
             // BOARD PAGE
             {
-                var boardPage = m_pages[SideBarOptions.BoardTabs] = new NullWidget(mainHolder)
+                var boardPage = m_pages[SideBarOptions.Tabs] = new NullWidget(mainHolder)
                 {
                     Fitting = FitPolicy.ExpandingPolicy,
                     Layout = new HBoxLayout()
@@ -285,7 +285,7 @@ public class MainWindow : NormalWindow
             }
         }
 
-        switchPage(SideBarOptions.BoardTabs);
+        switchPage(SideBarOptions.Tabs);
     }
 
     public static Label TabInfoWidgetThing(Widget parent)
@@ -319,18 +319,18 @@ public class MainWindow : NormalWindow
 
     public void NewCatalogTab(Imageboard.Catalog catalog)
     {
-        var tabParent = m_pages[SideBarOptions.BoardTabs];
+        var tabParent = m_pages[SideBarOptions.Tabs];
         var tab = new CatalogTab(catalog, tabParent)
         {
             Fitting = FitPolicy.ExpandingPolicy,
         };
         
-        m_tabs.Add(tab);
+        m_sideBar.CreateTab($"/{catalog.Board.Id}/", tab);
     }
 
-    public void LoadPage_Board()
+    public void LoadPage_Tabs()
     {
-        switchPage(SideBarOptions.BoardTabs);
+        switchPage(SideBarOptions.Tabs);
     }
 
     public void LoadPage_History()
