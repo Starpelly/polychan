@@ -1,4 +1,4 @@
-<img align="left" src="Polychan.Resources/Images/4channy.png" height="120">
+<img align="left" src="Polychan.Resources/Images/Client/4channy.png" height="120">
 
 # Polychan
 A 4chan desktop app because I hate the web!
