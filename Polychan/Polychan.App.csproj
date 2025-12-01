@@ -7,7 +7,6 @@
     <Nullable>enable</Nullable>
     <Company>Boxsubmus</Company>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <RootNamespace>Polychan</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

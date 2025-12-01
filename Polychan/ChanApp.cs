@@ -1,4 +1,6 @@
-﻿using Polychan.GUI;
+﻿using Imageboard;
+using Polychan.App.Widgets.Main;
+using Polychan.GUI;
 using Polychan.Resources;
 // using Polychan.App.Database;
 
@@ -51,10 +53,11 @@ public static class ChanApp
             PolychanResources.ResourceAssembly.GetManifestResourceStream("Polychan.Resources.Images.Client.4channy.ico");
         MainWindow.SetIconFromStream(iconStream!);
 */
+
+        var testCatalog = ChanApp.ImageboardClient
+            .GetCatalogAsync(ChanApp.ImageboardClient.FourChanBoards[new BoardId("g")]).GetAwaiter().GetResult();
+        var tab = MainWindow.CreateNewTabWithCatalog(testCatalog);
         
-        var test = ImageboardClient.FourChanBoards[new("g")];
-        var catalog = ImageboardClient.GetCatalogAsync(test).GetAwaiter().GetResult();
-        MainWindow.NewCatalogTab(catalog);
         // LoadCatalog("g");
         // LoadThread("714085510");
         MainWindow.Show();

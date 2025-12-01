@@ -2,7 +2,7 @@
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
 
-namespace Polychan.App.Widgets;
+namespace Polychan.App.Widgets.Main;
 
 public class CatalogListView : Widget
 {

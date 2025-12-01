@@ -1,11 +1,11 @@
-﻿using MaterialDesign;
+﻿using System.Diagnostics;
+using MaterialDesign;
 using Polychan.GUI;
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
-using Polychan.App.Widgets;
 using Polychan.App.Widgets.History;
 
-namespace Polychan.App;
+namespace Polychan.App.Widgets.Main;
 
 public class MainWindow : NormalWindow
 {
@@ -17,57 +17,50 @@ public class MainWindow : NormalWindow
         Search
     }
 
-    class CatalogTab : NullWidget
+    public class CatalogPage : Widget
     {
-        private readonly CatalogListView m_catalogListView;
+        private SideBar.TabWidget? m_tab;
 
-        private ThreadView? m_threadView;
-        // private readonly TabsController m_postTabs;
-        
-        private Imageboard.Catalog m_catalog;
-        private Imageboard.Thread? m_currentThread;
+        private BoardSelectorWidget? m_emptySelector;
+        private CatalogContentWidget? m_catalog;
 
-        public CatalogTab(Imageboard.Catalog catalog, Widget parent) : base(parent)
+        public CatalogPage(Widget parent) : base(parent)
         {
-            Layout = new HBoxLayout();
-            
-            m_catalog = catalog;
-            m_catalogListView = new CatalogListView(catalog, this)
-            {
-                Fitting = new FitPolicy(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
-            };
-
-            new VLine(this)
-            {
-                Fitting = new FitPolicy(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
-            };
-            
-            /*
-            m_postTabs = new TabsController(this)
-            {
-                Fitting = FitPolicy.ExpandingPolicy
-            };
-            */
-            
-            m_catalogListView.T();
-
-            m_catalogListView.OnItemClick = loadThread;
+            Layout = new VBoxLayout();
         }
 
-        private void loadThread(ThreadTicketWidget ticket)
+        public void ConnectTab(SideBar.TabWidget tab)
         {
-            var threadId = ticket.ApiThread.Id;
-                
-            m_currentThread = ChanApp.ImageboardClient.GetFullThreadAsync(ticket.ApiThread).GetAwaiter().GetResult();
+            Debug.Assert(m_tab == null);
+            m_tab = tab;
+        }
+        
+        public void LoadEmpty()
+        {
+            Debug.Assert(m_emptySelector == null);
+            m_emptySelector = new BoardSelectorWidget(this)
+            {
+                Fitting = FitPolicy.ExpandingPolicy,
+                OnSelect = (boardId) =>
+                {
+                    var catalog = ChanApp.ImageboardClient.GetCatalogAsync(ChanApp.ImageboardClient.FourChanBoards[boardId]).GetAwaiter().GetResult();
+                    LoadCatalog(catalog);
+                }
+            };
+        }
+        
+        public void LoadCatalog(Imageboard.Catalog catalog)
+        {
+            m_emptySelector?.Dispose();
+            m_catalog?.Dispose();
             
-            m_threadView?.Dispose();
-            m_threadView = new ThreadView(m_currentThread, this);
-            // m_postTabs.AddTab(view, $"{threadId}");
-
-            /*
-            ChanApp.HistoryDb.SaveVisit(threadId, m_catalogListView.CurrentBoard,
-                ticket.ApiThread.OriginalJson, m_catalogListView.Threads[threadId].PreviewImage.Bitmap.EncodedData.ToArray());
-                */
+            m_catalog = new CatalogContentWidget(this)
+            {
+                Fitting = FitPolicy.ExpandingPolicy,
+            };
+            
+            m_catalog.LoadCatalog(catalog);
+            m_tab!.SetLabel($"/{catalog.Board.Id}/");
         }
     }
 
@@ -103,7 +96,7 @@ public class MainWindow : NormalWindow
                 Width = this.Width,
                 ScreenPosition = MenuBar.Orientation.Top,
 
-                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+                Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
 
             void AddMenu(string title, MenuAction[] items)
@@ -160,13 +153,13 @@ public class MainWindow : NormalWindow
             ToolBar.AddAction(new MenuAction(MaterialIcons.Settings, "Settings", OpenSettings));
             ToolBar.AddAction(new MenuAction(MaterialIcons.Info, "About", ShowAbout));
 
-            new HLine(this)
+            _ = new HLine(this)
             {
                 Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
         }
 
-        CentralWidget = new(this)
+        CentralWidget = new Widget(this)
         {
             Fitting = FitPolicy.ExpandingPolicy
         };
@@ -189,58 +182,11 @@ public class MainWindow : NormalWindow
             };
             */
 
-            // Boards list
-            /*
-            {
-                var boardsListHolder = new NullWidget(mainHolder)
-                {
-                    Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
-                    Width = 158,
-
-                    Layout = new VBoxLayout { }
-                };
-
-                var m_boardsListWidget = new ScrollArea(boardsListHolder)
-                {
-                    Fitting = FitPolicy.ExpandingPolicy
-                };
-                // m_boardsListWidget.VerticalScrollbar.Visible = false;
-
-                m_boardsListWidget.ContentFrame.Layout = new HBoxLayout
-                {
-                };
-
-                m_boardsListWidget.ChildWidget = new NullWidget(m_boardsListWidget.ContentFrame)
-                {
-                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                    AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
-                    Layout = new VBoxLayout
-                    {
-                        Padding = new(8),
-                        Spacing = 4,
-                    },
-                    Name = "Boards Lists Holder"
-                };
-
-                foreach (var board in ChanApp.Client.Boards.Boards)
-                {
-                    new PushButton(board.Title, m_boardsListWidget.ChildWidget)
-                    {
-                        Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                        OnClicked = () =>
-                        {
-                            ChanApp.LoadCatalog(board.URL);
-                        }
-                    };
-                }
-            }
-            */
-
             // SideBar
             {
                 m_sideBar = new SideBar(this, mainHolder)
                 {
-                    Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
+                    Fitting = new FitPolicy(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                     Width = 140
                 };
                 CreateSeparator(mainHolder);
@@ -278,7 +224,7 @@ public class MainWindow : NormalWindow
 
             void CreateSeparator(Widget parent)
             {
-                new VLine(parent)
+                _ = new VLine(parent)
                 {
                     Fitting = new FitPolicy(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                 };
@@ -309,23 +255,40 @@ public class MainWindow : NormalWindow
         };
 
         // Separator
-        new HLine(parent)
+        _ = new HLine(parent)
         {
             Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
             Height = 1
         };
         return w;
     }
-
-    public void NewCatalogTab(Imageboard.Catalog catalog)
+    
+    public CatalogPage CreateNewEmptyTab()
     {
-        var tabParent = m_pages[SideBarOptions.Tabs];
-        var tab = new CatalogTab(catalog, tabParent)
+        var page = m_pages[SideBarOptions.Tabs];
+        var value = new CatalogPage(page)
         {
-            Fitting = FitPolicy.ExpandingPolicy,
+            Fitting = FitPolicy.ExpandingPolicy
         };
+        var tab = m_sideBar.CreateTab($"None", value);
+        value.ConnectTab(tab);
         
-        m_sideBar.CreateTab($"/{catalog.Board.Id}/", tab);
+        value.LoadEmpty();
+        return value;
+    }
+
+    public CatalogPage CreateNewTabWithCatalog(Imageboard.Catalog catalog)
+    {
+        var page = m_pages[SideBarOptions.Tabs];
+        var value = new CatalogPage(page)
+        {
+            Fitting = FitPolicy.ExpandingPolicy
+        };
+        var tab = m_sideBar.CreateTab($"None", value);
+        value.ConnectTab(tab);
+        
+        value.LoadCatalog(catalog);
+        return value;
     }
 
     public void LoadPage_Tabs()

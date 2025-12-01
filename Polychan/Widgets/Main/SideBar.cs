@@ -3,14 +3,14 @@ using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
 using SkiaSharp;
 
-namespace Polychan.App;
+namespace Polychan.App.Widgets.Main;
 
 public class SideBar : Widget, IPaintHandler
 {
     private readonly MainWindow m_mainWindow;
     private readonly List<TabWidget> m_tabs = [];
     private readonly Widget m_tabListContainer;
-    private TabWidget m_selectedTab;
+    private TabWidget? m_selectedTab;
 
     public class TabWidget : Widget, IPaintHandler, IMouseDownHandler
     {
@@ -51,6 +51,11 @@ public class SideBar : Widget, IPaintHandler
             m_sideBar.SwitchTab(this);
             return true;
         }
+
+        public void SetLabel(string label)
+        {
+            this.Label = label;
+        }
     }
     
     public SideBar(MainWindow window, Widget? parent = null) : base(parent)
@@ -60,7 +65,7 @@ public class SideBar : Widget, IPaintHandler
         Layout = new VBoxLayout()
         {
             Padding = new Padding(8),
-            Spacing = 2
+            Spacing = 4
         };
 
         m_tabListContainer = new ShapedFrame(this)
@@ -77,9 +82,7 @@ public class SideBar : Widget, IPaintHandler
             Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
             OnClicked = () =>
             {
-                var test = ChanApp.ImageboardClient.FourChanBoards[new("b")];
-                var catalog = ChanApp.ImageboardClient.GetCatalogAsync(test).GetAwaiter().GetResult();
-                m_mainWindow.NewCatalogTab(catalog);
+                m_mainWindow.CreateNewEmptyTab();
             }
         };
 
@@ -99,22 +102,23 @@ public class SideBar : Widget, IPaintHandler
         selectable("Search", null);
     }
 
-    public void CreateTab(string title, Widget content)
+    public TabWidget CreateTab(string title, Widget content)
     {
         foreach (var tab in m_tabs)
         {
             tab.Content.Visible = false;
             tab.Selected = false;
         }
-        
-        m_tabs.Add(new TabWidget(this, m_tabListContainer)
+
+        var widget = new TabWidget(this, m_tabListContainer)
         {
             Label = title,
             Content = content,
             Selected = true,
-            
+
             Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
-        });
+        };
+        m_tabs.Add(widget);
         
         // Weird separator?
         /*
@@ -123,6 +127,8 @@ public class SideBar : Widget, IPaintHandler
             Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
         };
         */
+
+        return widget;
     }
 
     public void SwitchTab(TabWidget widget)

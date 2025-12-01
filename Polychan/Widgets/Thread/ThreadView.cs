@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics;
-using Polychan.App.Widgets;
+using Polychan.App.Widgets.Main;
 using Polychan.GUI.Layouts;
 using Polychan.GUI.Widgets;
-using SkiaSharp;
 
-namespace Polychan.App;
+namespace Polychan.App.Widgets;
 
 public class ThreadView : Widget
 {
