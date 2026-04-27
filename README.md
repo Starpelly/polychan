@@ -1,3 +1,5 @@
+## !!This project is being rewritten from scratch because of poor design decisions in the past lol!!
+
 <img align="left" src="Polychan.Resources/Images/Client/4channy.png" height="120">
 
 # Polychan
